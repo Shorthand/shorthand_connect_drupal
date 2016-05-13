@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Implements hook_help().
+ *
+ * Displays help and module information.
+ *
+ * @param path 
+ *   Which path of the site we're using to display help
+ * @param arg 
+ *   Array that holds the current path as returned from arg() function
+ */
+function shorthand_connect_help($path, $arg) {
+  print_r($path);
+  switch ($path) {
+    case "admin/help#shorthand_connect":
+      return '' . t("A module that allows the publishing of Shorthand stories directly to Drupal") . '';
+      break;
+  }
+} 
+
+/**
+ * Page callback: Current posts settings
+ *
+ * @see current_posts_menu()
+ */
+function shorthand_connect_form($form, &$form_state) {
+  $form['shorthand_connect_user_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User ID'),
+    '#default_value' => variable_get('shorthand_connect_user_id', ''),
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#description' => t('Your Shorthand User ID.'),
+    '#required' => TRUE,
+  );
+  $form['shorthand_connect_token'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Shorthand Token'),
+    '#default_value' => variable_get('shorthand_connect_token', ''),
+    '#size' => 20,
+    '#maxlength' => 20,
+    '#description' => t('Your Shorthand API Token.'),
+    '#required' => TRUE,
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function shorthand_connect_menu() {
+  $items = array();
+
+  $items['admin/config/content/shorthand_connect'] = array(
+    'title' => 'Current posts',
+    'description' => 'Configuration for Shorthand Connect module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('shorthand_connect_form'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}

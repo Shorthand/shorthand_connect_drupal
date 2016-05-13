@@ -1,0 +1,5 @@
+name = Shorthand Connect
+description = A module that allows the publishing of Shorthand stories directly to Drupal.
+core = 7.x
+
+configure = admin/config/content/shorthand_connect

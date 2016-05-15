@@ -1,5 +1,8 @@
 <?php
 
+require_once('config.default.php');
+require_once('includes/api.php');
+
 /**
  * Implements hook_help().
  *
@@ -11,7 +14,6 @@
  *   Array that holds the current path as returned from arg() function
  */
 function shorthand_connect_help($path, $arg) {
-  print_r($path);
   switch ($path) {
     case "admin/help#shorthand_connect":
       return '' . t("A module that allows the publishing of Shorthand stories directly to Drupal") . '';
@@ -29,8 +31,8 @@ function shorthand_connect_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#default_value' => variable_get('shorthand_connect_user_id', ''),
-    '#size' => 3,
-    '#maxlength' => 3,
+    '#size' => 6,
+    '#maxlength' => 6,
     '#description' => t('Your Shorthand User ID.'),
     '#required' => TRUE,
   );
@@ -38,12 +40,26 @@ function shorthand_connect_form($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Shorthand Token'),
     '#default_value' => variable_get('shorthand_connect_token', ''),
-    '#size' => 20,
-    '#maxlength' => 20,
+    '#size' => 30,
+    '#maxlength' => 30,
     '#description' => t('Your Shorthand API Token.'),
     '#required' => TRUE,
   );
   return system_settings_form($form);
+}
+
+function shorthand_connect_form_validate($form, &$form_state){
+  $user_id = $form_state['values']['shorthand_connect_user_id'];
+  $token = $form_state['values']['shorthand_connect_token'];
+  if (!is_numeric($user_id)){
+    form_set_error('shorthand_connect_user_id', t('User ID must be an integer.'));
+  }
+  else {
+  	$data = sh_get_profile($user_id, $token);
+    if(!isset($data->username)) {
+      form_set_error('shorthand_connect_token', t('Invalid token.'));
+    }
+  }
 }
 
 /**

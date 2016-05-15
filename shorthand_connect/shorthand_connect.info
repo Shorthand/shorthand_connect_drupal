@@ -3,3 +3,5 @@ description = A module that allows the publishing of Shorthand stories directly 
 core = 7.x
 
 configure = admin/config/content/shorthand_connect
+
+dependencies[] = entity:entity

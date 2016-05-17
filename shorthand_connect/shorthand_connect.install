@@ -1,0 +1,118 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function shorthand_connect_enable() {
+	$t = get_t();
+
+    $type = array( 
+        'type' => 'shorthand_story', 
+        'name' => $t('Shorthand Story'), 
+        'base' => 'node_content', 
+        'description' => $t('Use stories from your Shorthand Account, directly in Drupal.'), 
+        'custom' => 0, 
+        'modified' => 1, 
+        'locked' => 0, 
+    ); 
+
+    $type = node_type_set_defaults($type); 
+
+    node_type_save($type);
+
+    try {
+        $field = array(
+            'field_name' => 'shorthand_story_id',
+            'type' => 'text',
+            'entity_types' => array('node'),
+            'weight' => 1,
+        );
+        $field = field_create_field($field);
+        $field = array(
+            'field_name' => 'shorthand_story_extra_html',
+            'type' => 'text',
+            'entity_types' => array('node'),
+            'weight' => 2,
+        );
+        $field = field_create_field($field);
+        $field = array(
+            'field_name' => 'shorthand_story_head',
+            'type' => 'text_long',
+            'entity_types' => array('node'),
+            'weight' => 2,
+        );
+        $field = field_create_field($field);
+        $field = array(
+            'field_name' => 'shorthand_story_body',
+            'type' => 'text_long',
+            'entity_types' => array('node'),
+            'weight' => 2,
+        );
+        $field = field_create_field($field);
+    } catch (Exception $e) {
+        //Field already exists
+        echo 'FIELD EXISTS';
+        die();
+    }
+    try {
+        $instance = array(
+            'field_name' => 'shorthand_story_id',
+            'entity_type' => 'node',
+            'bundle' => 'shorthand_story',
+            'label' => t('Shorthand Story'),
+            'widget' => array('type' => 'shorthand_story_select', 'weight' => 1),
+        );
+        $instance = field_create_instance($instance);
+        $instance = array(
+            'field_name' => 'shorthand_story_extra_html',
+            'entity_type' => 'node',
+            'bundle' => 'shorthand_story',
+            'label' => t('Shorthand Additional HTML'),
+            'widget' => array('type' => 'text_textarea', 'weight' => 2),
+        );
+        $instance = field_create_instance($instance);
+        $instance = array(
+            'field_name' => 'shorthand_story_head',
+            'entity_type' => 'node',
+            'bundle' => 'shorthand_story',
+            'label' => t('Shorthand Story Head'),
+            'widget' => array('type' => 'text_textarea', 'weight' => 2),
+        );
+        $instance = field_create_instance($instance);
+        $instance = array(
+            'field_name' => 'shorthand_story_body',
+            'entity_type' => 'node',
+            'bundle' => 'shorthand_story',
+            'label' => t('Shorthand Story Body'),
+            'widget' => array('type' => 'text_textarea', 'weight' => 2),
+        );
+        $instance = field_create_instance($instance);
+    } catch (Exception $e) {
+        //Field instance already exists
+        echo 'FIELD INSTANCE EXISTS';
+        die();
+    }
+}
+
+function shorthand_connect_disable() {
+    $node_types = node_type_get_types(); 
+    foreach($node_types as $node_type){
+        if($instance = field_info_instance('node', 'shorthand_story_id', $node_type->type)) {
+            field_delete_instance($instance);
+        }
+        if($instance = field_info_instance('node', 'shorthand_story_extra_html', $node_type->type)) {
+            field_delete_instance($instance);
+        }
+        if($instance = field_info_instance('node', 'shorthand_story_head', $node_type->type)) {
+            field_delete_instance($instance);
+        }
+        if($instance = field_info_instance('node', 'shorthand_story_body', $node_type->type)) {
+            field_delete_instance($instance);
+        }
+    }
+    field_delete_field('shorthand_story_id');
+    field_delete_field('shorthand_story_extra_html');
+    field_delete_field('shorthand_story_head');
+    field_delete_field('shorthand_story_body');
+    node_type_delete('shorthand_story');
+}

@@ -1,4 +1,4 @@
 <?php
 
-$serverURL = 'http://localhost:8000';
+$serverURL = 'https://app.shorthand.com';
 variable_set('sh_server_url', $serverURL);

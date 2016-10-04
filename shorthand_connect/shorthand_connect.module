@@ -1,6 +1,10 @@
 <?php
 
-require_once('config.default.php');
+$included = @include_once('config.php');
+if (!$included) {
+	require_once('config.default.php');
+}
+
 require_once('includes/api.php');
 require_once('includes/help.php');
 require_once('includes/settings.php');
@@ -73,7 +77,7 @@ function shorthand_connect_node_update($node) {
 }
 
 function update_node_data($node) {
-  $node->original = isset($node->original) ? $node->original : NULL; 
+  $node->original = isset($node->original) ? $node->original : NULL;
   $shorthand_id = $node->shorthand_story_id[$node->language][0]['value'];
   $node_id = $node->uid;
   $story = sh_copy_story($node_id, $shorthand_id);

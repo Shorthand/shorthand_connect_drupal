@@ -77,15 +77,17 @@ function shorthand_connect_node_update($node) {
 }
 
 function update_node_data($node) {
-  $node->original = isset($node->original) ? $node->original : NULL;
-  $shorthand_id = $node->shorthand_story_id[$node->language][0]['value'];
-  $node_id = $node->uid;
-  $story = sh_copy_story($node_id, $shorthand_id);
-  $head = fix_content_paths($story['url'], file_get_contents($story['path'].'/component_head.html'));
-  $node->shorthand_story_head[$node->language][0]['value'] = $head;
-  $body = fix_content_paths($story['url'], file_get_contents($story['path'].'/component_article.html'));
-  $node->shorthand_story_body[$node->language][0]['value'] = $body;
-  field_attach_update('node', $node);
+  if (isset($node->shorthand_story_id)) {
+    $node->original = isset($node->original) ? $node->original : NULL;
+    $shorthand_id = $node->shorthand_story_id[$node->language][0]['value'];
+    $node_id = $node->uid;
+    $story = sh_copy_story($node_id, $shorthand_id);
+    $head = fix_content_paths($story['url'], file_get_contents($story['path'].'/component_head.html'));
+    $node->shorthand_story_head[$node->language][0]['value'] = $head;
+    $body = fix_content_paths($story['url'], file_get_contents($story['path'].'/component_article.html'));
+    $node->shorthand_story_body[$node->language][0]['value'] = $body;
+    field_attach_update('node', $node);
+  }
 }
 
 function fix_content_paths($assets_path, $content) {

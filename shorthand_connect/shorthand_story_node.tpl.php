@@ -122,7 +122,9 @@
       if(isset($content['shorthand_story_id'])) {
 	      echo $content['shorthand_story_id']['#object']->shorthand_story_head[$content['shorthand_story_id']['#language']][0]['value'];
     	  echo $content['shorthand_story_id']['#object']->shorthand_story_body[$content['shorthand_story_id']['#language']][0]['value'];
-    	  echo $content['shorthand_story_id']['#object']->shorthand_story_extra_html[$content['shorthand_story_id']['#language']][0]['value'];
+        if (array_key_exists($content['shorthand_story_id']['#language'], $content['shorthand_story_id']['#object']->shorthand_story_extra_html)) {
+          echo $content['shorthand_story_id']['#object']->shorthand_story_extra_html[$content['shorthand_story_id']['#language']][0]['value'];
+        }
     	} else {
     		print render($content);
     	}

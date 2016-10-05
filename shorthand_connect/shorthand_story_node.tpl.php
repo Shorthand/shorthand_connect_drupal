@@ -88,7 +88,7 @@
     	width: auto;
     }
     #content {
-    	width: auto !important;
+    	width: 100% !important;
     }
     #content .section, .sidebar .section {
     	padding: 0;

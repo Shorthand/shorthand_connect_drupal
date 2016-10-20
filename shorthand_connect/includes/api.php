@@ -1,7 +1,7 @@
 <?php
 
 function sh_get_profile($user_id, $token) {
-	
+
 	$serverURL = variable_get('sh_server_url', '');
 
 	$valid_token = false;
@@ -39,13 +39,15 @@ function sh_get_stories() {
 			'data'=>$vars,
 			'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
 		));
-		if($response->data) {
+		if(isset($response->data)) {
 	 		$data = json_decode($response->data);
  			if(isset($data->stories)) {
  				$valid_token = true;
  				$stories = $data->stories;
  			}
- 		}
+ 		} else {
+			drupal_set_message(t('Could not connect to Shorthand, please check your Shorthand module settings.'), 'error');
+		}
  	}
  	return $stories;
 }
@@ -70,7 +72,7 @@ function sh_copy_story($post_id, $story_id) {
 			'method' => 'POST',
 			'data'=>$vars,
 			'headers' => array('Content-Type' => 'application/x-www-form-urlencoded','Cache-Control' => 'no-cache','Pragma' => 'no-cache','Connection' => 'keep-alive'),
-			'timeout' => 60.0	
+			'timeout' => 60.0
 		));
 		$zipfile = tempnam('/tmp', 'sh_zip');
 		$handle = fopen($zipfile, "w");

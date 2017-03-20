@@ -1,0 +1,238 @@
+<?php
+
+/**
+ * @file
+ */
+
+require_once('includes/api.php');
+
+/**
+ * Implements hook_help().
+ */
+function shorthand_connect_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#shorthand_connect":
+      return '<p>' . t("A module that allows the publishing of Shorthand stories directly to Drupal.") . '</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function shorthand_connect_menu() {
+  $items = array();
+  $items['admin/config/content/shorthand_connect'] = array(
+    'title' => 'Current posts',
+    'description' => 'Configuration for Shorthand Connect module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('shorthand_connect_form'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'shorthand_connect.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function shorthand_connect_field_widget_info() {
+  return array(
+    'shorthand_story_select' => array(
+      'label' => 'Shorthand stories selection',
+      'field types' => array('text'),
+      'settings' => array(
+        'size' => '60'
+      ),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT
+      )
+    )
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function shorthand_connect_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+
+  $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : '';
+  $widget = $element;
+  $widget['#delta'] = $delta;
+
+  switch ($instance['widget']['type']) {
+    case 'shorthand_story_select':
+      $data['serverURL'] = variable_get('sh_server_url', 'https://app.shorthand.com');
+      $data['stories'] = sh_get_stories();
+
+      $widget += array(
+        '#type' => 'textfield',
+        '#default_value' => $value,
+        '#size' => 10,
+        '#maxlength' => 10,
+        '#attached' => array(
+          'css' => array(drupal_get_path('module', 'shorthand_connect') . '/field_widget_form.css'),
+          'js' => array(drupal_get_path('module', 'shorthand_connect') . '/field_widget_form.js')
+        ),
+        '#suffix' => '<script>var shStoryData=' . json_encode($data) . ';</script>',
+      );
+      break;
+  }
+  $element['value'] = $widget;
+  return $element;
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function shorthand_connect_node_insert($node) {
+  update_node_data($node);
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function shorthand_connect_node_update($node) {
+  update_node_data($node);
+}
+
+/**
+ * Create or update shorthand story node.
+ *
+ * @param object $node
+ *   The newly-created or existing node.
+ */
+function update_node_data($node) {
+  if (isset($node->shorthand_story_id)) {
+    $node->original = isset($node->original) ? $node->original : NULL;
+    $shorthand_id = $node->shorthand_story_id[$node->language][0]['value'];
+    $node_id = $node->uid;
+    $story = sh_copy_story($node_id, $shorthand_id);
+    $head = _shorthand_connect_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
+    $node->shorthand_story_head[$node->language][0]['value'] = $head;
+    $body = _shorthand_connect_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
+    $node->shorthand_story_body[$node->language][0]['value'] = $body;
+    field_attach_update('node', $node);
+  }
+}
+
+/**
+ * Helper function to fix paths in the shorthand story.
+ *
+ * @param string $assets_path
+ *  The correct path in Drupal.
+ * @param string $content
+ *  The shorthand story.
+ *
+ * @return string
+ */
+function _shorthand_connect_fix_content_paths($assets_path, $content) {
+  $content = str_replace('./static/', $assets_path . '/static/', $content);
+  $content = str_replace('./media/', $assets_path . '/media/', $content);
+  return $content;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function shorthand_connect_theme($existing, $type, $theme, $path) {
+  return array(
+    'node__shorthand_story' => array(
+      'render element' => 'form',
+      'template' => 'shorthand_story_node',
+      // this will set to module/theme path by default:
+      'path' => drupal_get_path('module', 'shorthand_connect'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function shorthand_connect_preprocess_page(&$variables) {
+  if (isset($variables['node']->type)) {
+    $variables['theme_hook_suggestions'][] = 'page__' . $variables['node']->type;
+  }
+}
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function shorthand_connect_preprocess_html(&$vars) {
+  $node = menu_get_object();
+  if ($node && $node->type == 'shorthand_story' && $node->nid) {
+    drupal_add_css(drupal_get_path('module', 'shorthand_connect') . '/shorthand_connect.css', array(
+      'group' => CSS_THEME,
+      'weight' => 1000
+    ));
+
+    if ($node->shorthand_story_head[LANGUAGE_NONE][0]['value']) {
+      $vars['shorthand_story_head'] = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];
+    }
+
+    $vars['theme_hook_suggestions'][] = 'html__' . $node->type;
+  }
+}
+
+/**
+ * Unzip the Shorthand archive.
+ *
+ * @param string $file
+ *  The zip file path.
+ * @param $directory
+ *  The path to the directory to unzip the archive
+ *
+ * @return object \ArchiverZip|\ZipArchive
+ *  Either ArchiverZip from Drupal or PHP ZipArchive.
+ * @throws \Exception
+ */
+function shorthand_connect_archive_extract($file, $directory) {
+  if (class_exists('ZipArchive', FALSE)) {
+    $archiver = new ZipArchive;
+
+    if (!$archiver->open($file)) {
+      throw new Exception(t('Cannot extract %file, not a valid zip archive.', array ('%file' => $file)));
+    }
+
+    if (file_exists($directory)) {
+      file_unmanaged_delete_recursive($directory);
+    }
+
+    $archiver->extractTo($directory);
+    $archiver->close();
+
+    return $archiver;
+  }
+die("NOT HERE");
+  // If ZipArchive is not available try Drupal.
+  return _shorthand_connect_unzip_file($file, $directory);
+}
+
+/**
+ * Unzip the archive with Drupal implementation of extracting archives.
+ *
+ * @param string $file
+ *  The zip file path.
+ * @param $directory
+ *  The path to the directory to unzip the archive
+ *
+ * @return object \ArchiverZip
+ *   ArchiverZip from Drupal
+ * @throws \Exception
+ */
+function _shorthand_connect_unzip_file($file, $directory) {
+  module_load_include('inc', 'system', 'system.archiver');
+
+  $archiver = new ArchiverZip($file);
+  if (!$archiver) {
+    throw new Exception(t('Cannot extract %file, not a valid zip archive.', array ('%file' => $file)));
+  }
+
+  if (file_exists($directory)) {
+    file_unmanaged_delete_recursive($directory);
+  }
+
+  $archiver->extract($directory);
+  return $archiver;
+}

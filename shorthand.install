@@ -1,16 +1,21 @@
 <?php
 
 /**
+ * @file
+ * Install, update and uninstall functions for the Shorthand module.
+ */
+
+/**
  * Implements hook_install().
  */
-function shorthand_connect_install() {
-  variable_set('sh_server_url', 'https://app.shorthand.com');
+function shorthand_install() {
+  variable_set('shorthand_server_url', 'https://app.shorthand.com');
 }
 
 /**
  * Implements hook_enable().
  */
-function shorthand_connect_enable() {
+function shorthand_enable() {
   $t = get_t();
 
   $type = array(
@@ -56,8 +61,9 @@ function shorthand_connect_enable() {
       'weight' => 2,
     );
     $field = field_create_field($field);
-  } catch (Exception $e) {
-    //Field already exists
+  }
+  catch (Exception $e) {
+    // Field already exists.
     echo 'FIELD EXISTS';
     die();
   }
@@ -94,8 +100,9 @@ function shorthand_connect_enable() {
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
     );
     $instance = field_create_instance($instance);
-  } catch (Exception $e) {
-    //Field instance already exists
+  }
+  catch (Exception $e) {
+    // Field instance already exists.
     echo 'FIELD INSTANCE EXISTS';
     die();
   }
@@ -104,7 +111,7 @@ function shorthand_connect_enable() {
 /**
  * Implements hook_disable().
  */
-function shorthand_connect_disable() {
+function shorthand_disable() {
   $node_types = node_type_get_types();
   foreach ($node_types as $node_type) {
     if ($instance = field_info_instance('node', 'shorthand_story_id', $node_type->type)) {

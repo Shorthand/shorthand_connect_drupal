@@ -2,14 +2,13 @@
 
 /**
  * @file
- * Default theme implementation to display the basic html structure of a single
- * Drupal page.
+ * Theme implementation to display the basic html structure of a single page.
  *
  * Variables:
  * - $css: An array of CSS files for the current page.
  * - $language: (object) The language the site is being displayed in.
  *   $language->language contains its textual representation.
- *   $language->dir contains the language direction. It will either be 'ltr' or 'rtl'.
+ *   $language->dir contains the language direction - either 'ltr' or 'rtl'.
  * - $rdf_namespaces: All the RDF namespace prefixes used in the HTML document.
  * - $grddl_profile: A GRDDL profile allowing agents to extract the RDF data.
  * - $head_title: A modified version of the page title, for use in the TITLE
@@ -49,7 +48,9 @@
 <head profile="<?php print $grddl_profile; ?>">
   <?php print $head; ?>
 
-  <?php print $shorthand_story_head; ?>
+  <?php if ($shorthand_story_head): ?>
+    <?php print $shorthand_story_head; ?>
+  <?php endif; ?>
 
   <?php print $styles; ?>
   <?php print $scripts; ?>

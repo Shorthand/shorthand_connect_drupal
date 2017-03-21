@@ -12,7 +12,7 @@ This module provides integration with [Shorthand](https://shorthand.com/), an ap
 ## Installation
 
 - Install as any other Drupal module  
-- Go to admin/config/content/shorthand_connect and enter your User ID and API Token
+- Go to admin/config/services/shorthand and enter your User ID and API Token
 - Go to node/add and add a Shorthand Story
 
 You may customise the provided `html--shorthand-story.tpl.php` and `shorthand_story_node.tpl.php` template files

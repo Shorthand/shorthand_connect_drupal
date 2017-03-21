@@ -1,14 +1,18 @@
-# shorthand_connect_drupal
-Shorthand connect plugin for Drupal
+# Shorthand
 
-This repository has a number of Drupal plugins packaged together.  Each of the plugins (the folders) can be added to {DRUPAL}/sites/all/modules.  Alternatively, the entire repository can act as the modules directory.
+This module provides integration with [Shorthand](https://shorthand.com/), an application which describes itself as "beautifully simple storytelling". It connects your Shorthand account with Drupal and allows you to publish your stories on a Drupal website. [Create your Shorthand account](https://app.shorthand.com/signup/) to get a **User ID** and **API Token** (found on the account settings page) which are prerequisite for using this module.
 
-Once the modules are copied, login as an administrator into Drupal, and enable these modueles (modules, scroll to bottom):
 
-Shorthand connect (Required)
-Entity API (Required by the Shorthand connect plugin)
-jQuery update (Optional, if you run into issues with editing stories try this)
+## Dependencies
 
-Once these modules are enabled, click the "Configure" link on the Shorthand module.  Enter in the export users user ID and token (both of these are found in the account page in shorthand).  Once this is done, you should be able to add new Shorthand stories in the same way you add other Drupal content (Content > Add Content > Shorthand Story).
+- Entity API
+- JQuery Update
 
-The plugin is in an early stage, and feedback is very welcome.
+
+## Installation
+
+- Install as any other Drupal module  
+- Go to admin/config/content/shorthand_connect and enter your User ID and API Token
+- Go to node/add and add a Shorthand Story
+
+You may customise the provided `html--shorthand-story.tpl.php` and `shorthand_story_node.tpl.php` template files

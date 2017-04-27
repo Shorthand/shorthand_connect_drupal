@@ -1,53 +1,53 @@
 li.story {
-	float:left;
-	width:160px;
-	margin:5px;
-	list-style-type: none;
+  float: left;
+  width: 160px;
+  margin: 5px;
+  list-style-type: none;
 }
 li.story.selected label {
-	background:#5b9dd9;
-	color:#eee;
+  background: #5b9dd9;
+  color: #eee;
 }
 li.story input {
-	display: none !important;
+  display: none !important;
 }
 li.story label {
-	display:block;
-	background:#fafafa;
-	text-align: center;
-	height:140px;
-	padding-top:5px;
-	border:1px solid #eeeeee;
+  display: block;
+  background: #fafafa;
+  text-align: center;
+  height: 140px;
+  padding-top: 5px;
+  border: 1px solid #eeeeee;
 }
 li.story label:hover {
-	border:1px solid #5b9dd9;
+  border: 1px solid #5b9dd9;
 }
 li.story label span {
-	display: block;
-	font-weight: bold;
+  display: block;
+  font-weight: bold;
 }
 div.clear {
-	clear:left;
+  clear: left;
 }
 #codearea {
-	border:1px solid #999999;
-	font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
-	width:100%;
-	height:300px;
+  border: 1px solid #999999;
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  width: 100%;
+  height: 300px;
 }
 .field-widget-shorthand-story-select ul.stories {
-	max-height:400px;
-	overflow-y:scroll;
-	border:1px solid #ccc;
-	margin:0;
-	margin-top:-16px;
+  max-height: 400px;
+  overflow-y: scroll;
+  border: 1px solid #ccc;
+  margin: 0;
+  margin-top: -16px;
 }
 .field-name-shorthand-story-id input[type=text] {
-	display:none;
+  display: none;
 }
 .field-name-shorthand-story-head {
-	display:none;
+  display: none;
 }
 .field-name-shorthand-story-body {
-	display:none;
+  display: none;
 }

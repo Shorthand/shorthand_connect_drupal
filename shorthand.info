@@ -1,8 +1,8 @@
-name = Shorthand Connect
+name = Shorthand
 description = A module that allows the publishing of Shorthand stories directly to Drupal.
 core = 7.x
 
-configure = admin/config/content/shorthand_connect
+configure = admin/config/services/shorthand
 
 dependencies[] = entity
 dependencies[] = jquery_update

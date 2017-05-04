@@ -122,6 +122,16 @@ function update_node_data($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ */
+function shorthand_node_delete($node) {
+  $story_path = drupal_realpath('public://') . '/shorthand/' . $node->uid . '/' . $node->shorthand_story_id[$node->language][0]['value'];
+  if (file_exists($story_path)) {
+    file_unmanaged_delete_recursive($story_path);
+  }
+}
+
+/**
  * Helper function to fix paths in the shorthand story.
  *
  * @param string $assets_path

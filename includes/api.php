@@ -91,7 +91,7 @@ function sh_get_stories() {
 function sh_copy_story($node_id, $story_id) {
   $destination = drupal_realpath('public://');
   $destination_path = $destination . '/shorthand/' . $node_id . '/' . $story_id;
-  $destination_url = file_create_url('public://') . '/shorthand/' . $node_id . '/' . $story_id;
+  $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 
   $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
   $token = variable_get('shorthand_token', '');

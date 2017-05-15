@@ -111,10 +111,10 @@ function update_node_data($node) {
   if (isset($node->shorthand_story_id)) {
     $node->original = isset($node->original) ? $node->original : NULL;
 
-    $story = sh_copy_story($node->nid, $node->shorthand_story_id[$node->language][0]['value']);
+    $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
 
-    $node->shorthand_story_head[$node->language][0]['value'] = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
-    $node->shorthand_story_body[$node->language][0]['value'] = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
+    $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
+    $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
 
     field_attach_update('node', $node);
   }
@@ -124,7 +124,7 @@ function update_node_data($node) {
  * Implements hook_node_delete().
  */
 function shorthand_node_delete($node) {
-  $story_path = drupal_realpath('public://') . '/shorthand/' . $node->nid . '/' . $node->shorthand_story_id[$node->language][0]['value'];
+  $story_path = drupal_realpath('public://') . '/shorthand/' . $node->nid . '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
   if (file_exists($story_path)) {
     file_unmanaged_delete_recursive($story_path);
   }

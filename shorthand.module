@@ -115,12 +115,12 @@ function update_node_data($node) {
 
     $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
     // Allow modules to implement hook_shorthand_story_head_alter
-    drupal_alter('shorthand_story_head', $head);
+    drupal_alter('shorthand_story_head', $head, $node->nid);
     $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
 
     $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
     // Allow modules to implement hook_shorthand_story_body_alter
-    drupal_alter('shorthand_story_body', $body);
+    drupal_alter('shorthand_story_body', $body, $node->nid);
     $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
 
     field_attach_update('node', $node);

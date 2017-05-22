@@ -183,6 +183,17 @@ function shorthand_preprocess_html(&$vars) {
 }
 
 /**
+ * Implements hook_preprocess_node().
+ */
+function shorthand_preprocess_node(&$vars) {
+  if ($vars['type'] == 'shorthand_story') {
+    $vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
+    $vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
+    $vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
+  }
+}
+
+/**
  * Unzip the Shorthand archive.
  *
  * @param string $file

@@ -62,5 +62,10 @@
   <?php print $page_top; ?>
   <?php print $page; ?>
   <?php print $page_bottom; ?>
+
+  <?php if (isset($footer_scripts)): ?>
+    <?php print $footer_scripts; ?>
+  <?php endif; ?>
+
 </body>
 </html>

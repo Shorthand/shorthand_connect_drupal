@@ -110,14 +110,30 @@ function shorthand_node_update($node) {
 function update_node_data($node) {
   if (isset($node->shorthand_story_id)) {
     $node->original = isset($node->original) ? $node->original : NULL;
-    $shorthand_id = $node->shorthand_story_id[$node->language][0]['value'];
-    $node_id = $node->uid;
-    $story = sh_copy_story($node_id, $shorthand_id);
+
+    $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
+
     $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
-    $node->shorthand_story_head[$node->language][0]['value'] = $head;
+    // Allow modules to implement hook_shorthand_story_head_alter
+    drupal_alter('shorthand_story_head', $head, $node->nid);
+    $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
+
     $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
-    $node->shorthand_story_body[$node->language][0]['value'] = $body;
+    // Allow modules to implement hook_shorthand_story_body_alter
+    drupal_alter('shorthand_story_body', $body, $node->nid);
+    $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
+
     field_attach_update('node', $node);
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function shorthand_node_delete($node) {
+  $story_path = drupal_realpath('public://') . '/shorthand/' . $node->nid . '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
+  if (file_exists($story_path)) {
+    file_unmanaged_delete_recursive($story_path);
   }
 }
 
@@ -172,7 +188,7 @@ function shorthand_preprocess_html(&$vars) {
       'weight' => 1000,
     ));
 
-    if ($node->shorthand_story_head[LANGUAGE_NONE][0]['value']) {
+    if (!empty($node->shorthand_story_head[LANGUAGE_NONE][0]['value'])) {
       $vars['shorthand_story_head'] = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];
     }
 

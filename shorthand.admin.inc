@@ -25,7 +25,7 @@ function shorthand_admin_settings($form, &$form_state) {
   );
   $form['shorthand_token'] = array(
     '#type' => 'textfield',
-    '#title' => t('Shorthand Token'),
+    '#title' => t('API Token'),
     '#default_value' => variable_get('shorthand_token', ''),
     '#size' => 30,
     '#maxlength' => 30,

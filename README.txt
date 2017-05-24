@@ -23,4 +23,4 @@ Installation
 - Go to node/add and add a Shorthand Story
 
 You may customise the provided `html--shorthand-story.tpl.php` and
-`shorthand_story_node.tpl.php` template files
+`node--shorthand-story-node.tpl.php` template files

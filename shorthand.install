@@ -125,7 +125,7 @@ function shorthand_install() {
 function shorthand_uninstall() {
   variable_del('shorthand_server_url');
 
-  // Delete the content type "shorthand_story" if, there are no existing
+  // Delete the content type "shorthand_story" if there are no existing
   // shorthand_story nodes and no extra fields have been defined for the
   // shorthand_story node type.
   $query = new EntityFieldQuery();

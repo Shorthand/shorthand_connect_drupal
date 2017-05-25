@@ -34,7 +34,26 @@ function shorthand_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'shorthand.admin.inc',
   );
+  $items['node/add/shorthand-story'] = array(
+    'title'            => 'Check Shorthand account',
+    'page callback'    => 'shorthand_check_account',
+    'access arguments' => array('access content'),
+    'type'             => MENU_CALLBACK,
+  );
   return $items;
+}
+
+/**
+ * Prevent addition of Shorthand nodes without account.
+ */
+function shorthand_check_account() {
+  $shorthand_user_id = variable_get('shorthand_user_id', '');
+  $shorthand_token = variable_get('shorthand_token', '');
+  if (empty($shorthand_user_id) || empty($shorthand_token)) {
+    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
+    drupal_set_message($message, 'warning');
+    drupal_goto('node/add');
+  }
 }
 
 /**

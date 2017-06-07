@@ -34,26 +34,27 @@ function shorthand_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'shorthand.admin.inc',
   );
-  $items['node/add/shorthand-story'] = array(
-    'title'            => 'Check Shorthand account',
-    'page callback'    => 'shorthand_check_account',
-    'access arguments' => array('access content'),
-    'type'             => MENU_CALLBACK,
-  );
   return $items;
 }
 
 /**
- * Prevent addition of Shorthand nodes without account.
+ * Implements hook_menu_alter().
  */
-function shorthand_check_account() {
+function shorthand_menu_alter(&$items) {
   $shorthand_user_id = variable_get('shorthand_user_id', '');
   $shorthand_token = variable_get('shorthand_token', '');
   if (empty($shorthand_user_id) || empty($shorthand_token)) {
-    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
-    drupal_set_message($message, 'warning');
-    drupal_goto('node/add');
+    $items['node/add/shorthand-story']['page callback'] = 'shorthand_account_check';
   }
+}
+
+/**
+ * Prevent addition of Shorthand nodes without account details.
+ */
+function shorthand_account_check() {
+  $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
+  drupal_set_message($message, 'warning');
+  drupal_goto('node/add');
 }
 
 /**

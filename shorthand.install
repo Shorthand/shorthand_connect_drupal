@@ -95,8 +95,8 @@ function shorthand_install() {
     field_create_instance($instance);
   }
 
-  $field_info = field_info_field('');
-  $field_instance = field_info_instance('node', '', 'shorthand_story');
+  $field_info = field_info_field('shorthand_story_body');
+  $field_instance = field_info_instance('node', 'shorthand_story_body', 'shorthand_story');
   if (empty($field_info)) {
     $field = array(
       'field_name' => 'shorthand_story_body',
@@ -124,6 +124,8 @@ function shorthand_install() {
  */
 function shorthand_uninstall() {
   variable_del('shorthand_server_url');
+  variable_del('shorthand_token');
+  variable_del('shorthand_user_id');
 
   // Delete the content type "shorthand_story" if there are no existing
   // shorthand_story nodes and no extra fields have been defined for the

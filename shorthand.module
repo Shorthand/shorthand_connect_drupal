@@ -41,20 +41,22 @@ function shorthand_menu() {
  * Implements hook_menu_alter().
  */
 function shorthand_menu_alter(&$items) {
-  $shorthand_user_id = variable_get('shorthand_user_id', '');
-  $shorthand_token = variable_get('shorthand_token', '');
-  if (empty($shorthand_user_id) || empty($shorthand_token)) {
-    $items['node/add/shorthand-story']['page callback'] = 'shorthand_account_check';
-  }
+  $items['node/add/shorthand-story']['access callback'] = 'shorthand_account_check';
 }
 
 /**
  * Prevent addition of Shorthand nodes without account details.
  */
 function shorthand_account_check() {
-  $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
-  drupal_set_message($message, 'warning');
-  drupal_goto('node/add');
+  $shorthand_user_id = variable_get('shorthand_user_id', '');
+  $shorthand_token = variable_get('shorthand_token', '');
+  if (empty($shorthand_user_id) || empty($shorthand_token)) {
+    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
+    drupal_get_messages();
+    drupal_set_message($message, 'warning');
+    return FALSE;
+  }
+  return TRUE;
 }
 
 /**

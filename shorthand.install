@@ -164,13 +164,25 @@ function shorthand_uninstall() {
 }
 
 /**
- * Update field instance info for textareas.
+ * Update field instance info for textareas and support multilingual stories.
  */
 function shorthand_update_7001() {
-  $field_names = array('shorthand_story_extra_html', 'shorthand_story_head', 'shorthand_story_body');
+  $field_names = array(
+    'shorthand_story_extra_html',
+    'shorthand_story_head',
+    'shorthand_story_body',
+  );
   foreach ($field_names as $field_name) {
     $instance_info = field_info_instance('node', $field_name, 'shorthand_story');
     $instance_info['settings'] = array('text_processing' => 1);
     field_update_instance($instance_info);
+  }
+
+  if (module_exists('locale')) {
+    variable_set('language_content_type_shorthand_story', 2);
+  }
+
+  if (module_exists('i18n')) {
+    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
   }
 }

@@ -68,6 +68,7 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Additional HTML'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
   }
@@ -91,6 +92,7 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Story Head'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
   }
@@ -114,6 +116,7 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Story Body'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
   }
@@ -157,5 +160,17 @@ function shorthand_uninstall() {
     node_type_delete('shorthand_story');
     // Flush caches.
     drupal_flush_all_caches();
+  }
+}
+
+/**
+ * Update field instance info for textareas.
+ */
+function shorthand_update_7001() {
+  $field_names = array('shorthand_story_extra_html', 'shorthand_story_head', 'shorthand_story_body');
+  foreach ($field_names as $field_name) {
+    $instance_info = field_info_instance('node', $field_name, 'shorthand_story');
+    $instance_info['settings'] = array('text_processing' => 1);
+    field_update_instance($instance_info);
   }
 }

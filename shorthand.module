@@ -135,12 +135,16 @@ function update_node_data($node) {
 
     $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
 
-    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
+    // Handle texts in other languages.
+    $opts = array('http' => array('header' => 'Accept-Charset: UTF-8, *;q=0'));
+    $context = stream_context_create($opts);
+
+    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html', FALSE, $context));
     // Allow modules to implement hook_shorthand_story_head_alter.
     drupal_alter('shorthand_story_head', $head, $node->nid);
     $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
 
-    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
+    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html', FALSE, $context));
     // Allow modules to implement hook_shorthand_story_body_alter.
     drupal_alter('shorthand_story_body', $body, $node->nid);
     $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;

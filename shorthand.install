@@ -120,6 +120,14 @@ function shorthand_install() {
     );
     field_create_instance($instance);
   }
+
+  if (module_exists('locale')) {
+    variable_set('language_content_type_shorthand_story', 2);
+  }
+
+  if (module_exists('i18n')) {
+    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
+  }
 }
 
 /**

@@ -68,6 +68,7 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Additional HTML'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
   }
@@ -91,12 +92,13 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Story Head'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
   }
 
-  $field_info = field_info_field('');
-  $field_instance = field_info_instance('node', '', 'shorthand_story');
+  $field_info = field_info_field('shorthand_story_body');
+  $field_instance = field_info_instance('node', 'shorthand_story_body', 'shorthand_story');
   if (empty($field_info)) {
     $field = array(
       'field_name' => 'shorthand_story_body',
@@ -114,8 +116,17 @@ function shorthand_install() {
       'bundle' => 'shorthand_story',
       'label' => $t('Shorthand Story Body'),
       'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
     );
     field_create_instance($instance);
+  }
+
+  if (module_exists('locale')) {
+    variable_set('language_content_type_shorthand_story', 1);
+  }
+
+  if (module_exists('i18n')) {
+    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
   }
 }
 
@@ -124,8 +135,10 @@ function shorthand_install() {
  */
 function shorthand_uninstall() {
   variable_del('shorthand_server_url');
+  variable_del('shorthand_token');
+  variable_del('shorthand_user_id');
 
-  // Delete the content type "shorthand_story" if, there are no existing
+  // Delete the content type "shorthand_story" if there are no existing
   // shorthand_story nodes and no extra fields have been defined for the
   // shorthand_story node type.
   $query = new EntityFieldQuery();
@@ -155,5 +168,29 @@ function shorthand_uninstall() {
     node_type_delete('shorthand_story');
     // Flush caches.
     drupal_flush_all_caches();
+  }
+}
+
+/**
+ * Update field instance info for textareas and support multilingual stories.
+ */
+function shorthand_update_7001() {
+  $field_names = array(
+    'shorthand_story_extra_html',
+    'shorthand_story_head',
+    'shorthand_story_body',
+  );
+  foreach ($field_names as $field_name) {
+    $instance_info = field_info_instance('node', $field_name, 'shorthand_story');
+    $instance_info['settings'] = array('text_processing' => 1);
+    field_update_instance($instance_info);
+  }
+
+  if (module_exists('locale')) {
+    variable_set('language_content_type_shorthand_story', 1);
+  }
+
+  if (module_exists('i18n')) {
+    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
   }
 }

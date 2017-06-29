@@ -38,6 +38,28 @@ function shorthand_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function shorthand_menu_alter(&$items) {
+  $items['node/add/shorthand-story']['access callback'] = 'shorthand_account_check';
+}
+
+/**
+ * Prevent addition of Shorthand nodes without account details.
+ */
+function shorthand_account_check() {
+  $shorthand_user_id = variable_get('shorthand_user_id', '');
+  $shorthand_token = variable_get('shorthand_token', '');
+  if (empty($shorthand_user_id) || empty($shorthand_token)) {
+    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
+    drupal_get_messages();
+    drupal_set_message($message, 'warning');
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
  * Implements hook_field_widget_info().
  */
 function shorthand_field_widget_info() {
@@ -113,15 +135,21 @@ function update_node_data($node) {
 
     $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
 
-    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html'));
-    // Allow modules to implement hook_shorthand_story_head_alter
+    // Handle texts in other languages.
+    $opts = array('http' => array('header' => 'Accept-Charset: UTF-8, *;q=0'));
+    $context = stream_context_create($opts);
+
+    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html', FALSE, $context));
+    // Allow modules to implement hook_shorthand_story_head_alter.
     drupal_alter('shorthand_story_head', $head, $node->nid);
     $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
+    $node->shorthand_story_head[LANGUAGE_NONE][0]['format'] = 'full_html';
 
-    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html'));
-    // Allow modules to implement hook_shorthand_story_body_alter
+    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html', FALSE, $context));
+    // Allow modules to implement hook_shorthand_story_body_alter.
     drupal_alter('shorthand_story_body', $body, $node->nid);
     $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
+    $node->shorthand_story_body[LANGUAGE_NONE][0]['format'] = 'full_html';
 
     field_attach_update('node', $node);
   }
@@ -131,7 +159,7 @@ function update_node_data($node) {
  * Implements hook_node_delete().
  */
 function shorthand_node_delete($node) {
-  $story_path = drupal_realpath('public://') . '/shorthand/' . $node->nid . '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
+  $story_path = drupal_realpath('public://') . 'shorthand/' . $node->nid . '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
   if (file_exists($story_path)) {
     file_unmanaged_delete_recursive($story_path);
   }
@@ -152,20 +180,6 @@ function _shorthand_fix_content_paths($assets_path, $content) {
   $content = str_replace('./static/', $assets_path . '/static/', $content);
   $content = str_replace('./media/', $assets_path . '/media/', $content);
   return $content;
-}
-
-/**
- * Implements hook_theme().
- */
-function shorthand_theme($existing, $type, $theme, $path) {
-  return array(
-    'node__shorthand_story' => array(
-      'render element' => 'form',
-      'template' => 'shorthand_story_node',
-      // This will set to module/theme path by default:
-      'path' => drupal_get_path('module', 'shorthand'),
-    ),
-  );
 }
 
 /**
@@ -193,6 +207,17 @@ function shorthand_preprocess_html(&$vars) {
     }
 
     $vars['theme_hook_suggestions'][] = 'html__' . $node->type;
+  }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function shorthand_preprocess_node(&$vars) {
+  if ($vars['type'] == 'shorthand_story') {
+    $vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
+    $vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
+    $vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
   }
 }
 

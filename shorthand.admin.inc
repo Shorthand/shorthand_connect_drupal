@@ -73,8 +73,8 @@ function shorthand_admin_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('API Token'),
     '#default_value' => variable_get('shorthand_token', ''),
-    '#size' => 30,
-    '#maxlength' => 30,
+    '#size' => 40,
+    '#maxlength' => 40,
     '#description' => t('Your Shorthand API Token.'),
     '#required' => TRUE,
   );
@@ -86,13 +86,14 @@ function shorthand_admin_settings($form, &$form_state) {
  * Form-validate callback for admin settings form.
  */
 function shorthand_admin_settings_validate($form, &$form_state) {
+  $version = $form_state['values']['shorthand_version'];
   $user_id = $form_state['values']['shorthand_user_id'];
   $token = $form_state['values']['shorthand_token'];
   if (!is_numeric($user_id)) {
     form_set_error('shorthand_user_id', t('User ID must be an integer.'));
   }
   else {
-    $data = sh_get_profile($user_id, $token);
+    $data = sh_get_profile($user_id, $token, $version);
     if (!isset($data->username)) {
       form_set_error('shorthand_token', t('Invalid token.'));
     }

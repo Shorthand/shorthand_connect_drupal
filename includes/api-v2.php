@@ -16,7 +16,7 @@
  * @return array|mixed
  *   Data from SHorthand API.
  */
- function sh_get_profile($user_id, $token, $version = null) {
+function sh_get_profile($user_id, $token, $version = null) {
   $valid_token = FALSE;
   $data = array();
   if ($version == 'v1') {
@@ -54,27 +54,39 @@
  */
 function sh_get_stories() {
 
-  $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com/');
+  $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com/');
 
   $token = variable_get('shorthand_token', '');
-  $user_id = variable_get('shorthand_user_id', '');
 
   $stories = array();
 
   // Attempt to connect to the server.
-  if ($token && $user_id) {
-    $url = $serverURL . '/api/index/';
-    $vars = 'user=' . $user_id . '&token=' . $token;
+  if ($token) {
+    $url = $serverURL . '/v2/stories/';
     $response = drupal_http_request($url, array(
-      'method' => 'POST',
-      'data' => $vars,
-      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+      'method' => 'GET',
+      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
     ));
     if (isset($response->data)) {
       $data = json_decode($response->data);
-      if (isset($data->stories)) {
-        $valid_token = TRUE;
-        $stories = $data->stories;
+      if(isset($data)) {
+        $stories = array();
+        $valid_token = true;
+        //Something went wrong
+        if ($data->status) {
+          return null;
+        }
+        foreach($data as $storydata) {
+          $story = array(
+            'image' => $storydata->cover,
+            'id' => $storydata->id,
+            'metadata' => (object)array(
+              'description' => $storydata->description
+            ),
+            'title' => $storydata->title,
+          );
+          $stories[] = (object)$story;
+        }
       }
     }
     else {
@@ -101,14 +113,14 @@ function sh_copy_story($node_id, $story_id) {
   $destination_path = $destination . '/shorthand/' . $node_id . '/' . $story_id;
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 
-  $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
+  $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
   $token = variable_get('shorthand_token', '');
   $user_id = variable_get('shorthand_user_id', '');
 
   $story = array();
 
   // Attempt to connect to the server.
-  if ($token && $user_id) {
+  if ($token) {
     $url = $serverURL . '/api/story/' . $story_id . '/';
     $vars = 'user=' . $user_id . '&token=' . $token;
     $ch = curl_init($url);

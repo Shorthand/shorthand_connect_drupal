@@ -33,15 +33,15 @@ function sh_get_profile($user_id, $token, $version = null) {
     }
   } else {
     $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-    if ($token && $user_id) {
+    if ($token) {
       $url = $serverURL . '/v2/token-info';
       $response = drupal_http_request($url, array(
         'method' => 'GET',
         'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
       ));
       $data = json_decode($response->data);
+      $data->username = $data->name.' ('.$data->token_type.' Token)';
     }
-    $data->username = $data->name.' ('.$data->token_type.' Token)';
   }
   return $data;
 }
@@ -54,7 +54,7 @@ function sh_get_profile($user_id, $token, $version = null) {
  */
 function sh_get_stories() {
 
-  $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com/');
+  $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
 
   $token = variable_get('shorthand_token', '');
 
@@ -73,15 +73,19 @@ function sh_get_stories() {
         $stories = array();
         $valid_token = true;
         //Something went wrong
-        if ($data->status) {
+        if (isset($data->status)) {
           return null;
         }
         foreach($data as $storydata) {
+          $description = '';
+          if (isset($storydata->description)) {
+            $description = $storydata->description;
+          }
           $story = array(
             'image' => $storydata->cover,
             'id' => $storydata->id,
             'metadata' => (object)array(
-              'description' => $storydata->description
+              'description' => $description
             ),
             'title' => $storydata->title,
           );
@@ -93,7 +97,6 @@ function sh_get_stories() {
       drupal_set_message(t('Could not connect to Shorthand, please check your Shorthand module settings.'), 'error');
     }
   }
-
   return $stories;
 }
 
@@ -121,31 +124,33 @@ function sh_copy_story($node_id, $story_id) {
 
   // Attempt to connect to the server.
   if ($token) {
-    $url = $serverURL . '/api/story/' . $story_id . '/';
-    $vars = 'user=' . $user_id . '&token=' . $token;
+    $url = $serverURL . '/v2/stories/' . $story_id;
     $ch = curl_init($url);
 
     $zipfile = tempnam('/tmp', 'sh_zip');
     $ziphandle = fopen($zipfile, "w");
-
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $vars);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_POST, 0);
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Token '.$token));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_FILE, $ziphandle);
     $response = curl_exec($ch);
 
     if ($response == 1) {
       try {
-        shorthand_archive_extract($zipfile, $destination_path);
+        shorthand_archive_extract($zipfile, $destination_path, true);
         $story['path'] = $destination_path;
         $story['url'] = $destination_url;
       }
       catch (Exception $e) {
         // log.
+        $story['error'] = array(
+          'pretty' => 'Could not add story',
+          'error' => $e,
+          'response' => $response,
+        );
       }
 
     }

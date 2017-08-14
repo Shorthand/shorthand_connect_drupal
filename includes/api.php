@@ -40,8 +40,8 @@
         'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
       ));
       $data = json_decode($response->data);
+      $data->username = $data->name.' ('.$data->token_type.' Token)';
     }
-    $data->username = $data->name.' ('.$data->token_type.' Token)';
   }
   return $data;
 }
@@ -81,7 +81,6 @@ function sh_get_stories() {
       drupal_set_message(t('Could not connect to Shorthand, please check your Shorthand module settings.'), 'error');
     }
   }
-
   return $stories;
 }
 

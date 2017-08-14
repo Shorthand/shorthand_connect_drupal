@@ -15,13 +15,17 @@ jQuery(document).ready(function () {
             for (var shStory in shStoryData['stories']) {
                 var data = shStoryData['stories'][shStory];
                 var serverURL = shStoryData['serverURL'];
+                var imageURL = data.image;
+                if (shStoryData['version'] !== 'v2') {
+                    imageURL = serverURL + data.image;
+                }
                 var selected = '';
                 var storySelected = '';
                 if (existingID && existingID == data.id) {
                     selected = 'checked';
                     storySelected = 'selected';
                 }
-                list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + serverURL + data.image + '" /><span>' + data.title + '</span></a></label></li>');
+                list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + imageURL + '" /><span>' + data.title + '</span></a></label></li>');
             }
         }
     });

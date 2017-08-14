@@ -94,6 +94,7 @@ function shorthand_field_widget_form(&$form, &$form_state, $field, $instance, $l
   switch ($instance['widget']['type']) {
     case 'shorthand_story_select':
       $version = variable_get('shorthand_version', 'v1');
+      $data['version'] = $version;
       if ($version == 'v2') {
         $data['serverURL'] = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
       } else {
@@ -144,6 +145,11 @@ function update_node_data($node) {
     $node->original = isset($node->original) ? $node->original : NULL;
 
     $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
+
+    if (isset($story['error']) && isset($story['error']['pretty'])) {
+      print_r($story['error']['pretty']);
+      die();
+    }
 
     // Handle texts in other languages.
     $opts = array('http' => array('header' => 'Accept-Charset: UTF-8, *;q=0'));
@@ -241,9 +247,9 @@ function shorthand_preprocess_html(&$vars) {
  */
 function shorthand_preprocess_node(&$vars) {
   if ($vars['type'] == 'shorthand_story') {
-    $vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
-    $vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
-    $vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
+    @$vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
+    @$vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
+    @$vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
   }
 }
 
@@ -260,7 +266,7 @@ function shorthand_preprocess_node(&$vars) {
  *
  * @throws \Exception
  */
-function shorthand_archive_extract($file, $directory) {
+function shorthand_archive_extract($file, $directory, $version2archive=false) {
   if (class_exists('ZipArchive', FALSE)) {
     $archiver = new ZipArchive();
 
@@ -272,14 +278,50 @@ function shorthand_archive_extract($file, $directory) {
       file_unmanaged_delete_recursive($directory);
     }
 
-    $archiver->extractTo($directory);
-    $archiver->close();
+    if ($version2archive) {
+      $unzipdir = tempnam('/tmp', 'sh_unzip').'_dir';
+      if ($archiver->numFiles == 0) {
+        throw new Exception(t('Cannot extract story, bad story download (%archiver).', array('%archiver' => $archiver)));
+        die();
+      }
+      $archiver->extractTo($unzipdir);
+      $archiver->close();
+      $unzipname = array_values(preg_grep('/^([^.])/', scandir($unzipdir)))[0];
+      $resp = shorthand_xcopy($unzipdir.'/'.$unzipname, $directory);
+    } else {
+      $archiver->extractTo($directory);
+      $archiver->close();
+    }
 
     return $archiver;
   }
 
   // If ZipArchive is not available try Drupal.
   return _shorthand_unzip_file($file, $directory);
+}
+
+function shorthand_xcopy($source, $dest) {
+  // Simple copy for a file
+  if (is_file($source)) {
+    return file_unmanaged_copy($source, $dest);
+  }
+  // Make destination directory
+  if (!is_dir($dest)) {
+    drupal_mkdir($dest, null, true);
+  }
+  // Loop through the folder
+  $dir = dir($source);
+  while (false !== $entry = $dir->read()) {
+    // Skip pointers
+    if ($entry == '.' || $entry == '..') {
+        continue;
+    }
+    // Deep copy directories
+    shorthand_xcopy("$source/$entry", "$dest/$entry");
+  }
+  // Clean up
+  $dir->close();
+  return true;
 }
 
 /**

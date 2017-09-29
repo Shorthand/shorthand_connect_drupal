@@ -203,10 +203,9 @@ function shorthand_node_delete($node) {
 function _shorthand_fix_content_paths($assets_path, $content) {
   $version = variable_get('shorthand_version', 'v1');
   if ($version == 'v2') {
+    $content = str_replace('./assets/', $assets_path.'/assets/', $content);
+    $content = str_replace('./theme.min.css', $assets_path.'/theme.min.css', $content);
     $content = str_replace('./static/', $assets_path . '/static/', $content);
-    $content = str_replace('./media/', $assets_path . '/media/', $content);
-    $content = str_replace('./shared/', $assets_path . '/shared/', $content);
-    $content = str_replace('./theme/', $assets_path . '/theme/', $content);
   } else {
     $content = str_replace('./static/', $assets_path . '/static/', $content);
     $content = str_replace('./media/', $assets_path . '/media/', $content);
@@ -286,8 +285,7 @@ function shorthand_archive_extract($file, $directory, $version2archive=false) {
       }
       $archiver->extractTo($unzipdir);
       $archiver->close();
-      $unzipname = array_values(preg_grep('/^([^.])/', scandir($unzipdir)))[0];
-      $resp = shorthand_xcopy($unzipdir.'/'.$unzipname, $directory);
+      $resp = shorthand_xcopy($unzipdir, $directory);
     } else {
       $archiver->extractTo($directory);
       $archiver->close();

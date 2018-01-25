@@ -55,7 +55,7 @@ function shorthand_menu_alter(&$items) {
 function shorthand_account_check() {
   $shorthand_user_id = variable_get('shorthand_user_id', '');
   $shorthand_token = variable_get('shorthand_token', '');
-  if (empty($shorthand_user_id) || empty($shorthand_token)) {
+  if (empty($shorthand_token)) {
     $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
     drupal_get_messages();
     drupal_set_message($message, 'warning');

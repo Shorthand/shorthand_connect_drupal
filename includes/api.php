@@ -33,7 +33,7 @@
     }
   } else {
     $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-    if ($token && $user_id) {
+    if ($token) {
       $url = $serverURL . '/v2/token-info';
       $response = drupal_http_request($url, array(
         'method' => 'GET',

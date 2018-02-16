@@ -48,7 +48,7 @@
 <head profile="<?php print $grddl_profile; ?>">
   <?php print $head; ?>
 
-  <?php if ($shorthand_story_head): ?>
+  <?php if (isset($shorthand_story_head) && $shorthand_story_head): ?>
     <?php print $shorthand_story_head; ?>
   <?php endif; ?>
 

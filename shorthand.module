@@ -163,6 +163,12 @@ function update_node_data($node) {
       $body_path = $story['path'] . '/article.html';
     }
 
+    $version = variable_get('shorthand_version', 'v1');
+    // Allow modules to implement hook_shorthand_story_version_alter.
+    drupal_alter('shorthand_story_version', $version, $node->nid);
+    $node->shorthand_story_version[LANGUAGE_NONE][0]['value'] = $version;
+    $node->shorthand_story_version[LANGUAGE_NONE][0]['format'] = 'full_html';
+
     $head = _shorthand_fix_content_paths($story['url'], file_get_contents($head_path, FALSE, $context));
     // Allow modules to implement hook_shorthand_story_head_alter.
     drupal_alter('shorthand_story_head', $head, $node->nid);
@@ -249,6 +255,10 @@ function shorthand_preprocess_html(&$vars) {
       'group' => CSS_THEME,
       'weight' => 1000,
     ));
+
+    if (!empty($node->shorthand_story_version[LANGUAGE_NONE][0]['value'])) {
+      $vars['shorthand_story_version'] = $node->shorthand_story_version[LANGUAGE_NONE][0]['value'];
+    }
 
     if (!empty($node->shorthand_story_head[LANGUAGE_NONE][0]['value'])) {
       $vars['shorthand_story_head'] = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];

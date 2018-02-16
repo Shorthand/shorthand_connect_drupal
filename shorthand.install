@@ -122,6 +122,30 @@ function shorthand_install() {
     field_create_instance($instance);
   }
 
+  $field_info = field_info_field('shorthand_story_version');
+  $field_instance = field_info_instance('node', 'shorthand_story_version', 'shorthand_story');
+  if (empty($field_info)) {
+    $field = array(
+      'field_name' => 'shorthand_story_version',
+      'type' => 'text_long',
+      'entity_types' => array('node'),
+      'weight' => 2,
+    );
+    field_create_field($field);
+  }
+
+  if (empty($field_instance)) {
+    $instance = array(
+      'field_name' => 'shorthand_story_version',
+      'entity_type' => 'node',
+      'bundle' => 'shorthand_story',
+      'label' => $t('Shorthand Story Version'),
+      'widget' => array('type' => 'text_textarea', 'weight' => 2),
+      'settings' => array('text_processing' => 1),
+    );
+    field_create_instance($instance);
+  }
+
   if (module_exists('locale')) {
     variable_set('language_content_type_shorthand_story', 1);
   }
@@ -149,13 +173,14 @@ function shorthand_uninstall() {
     ->execute();
 
   $field_instances = field_info_instances('node', 'shorthand_story');
-  unset($field_instances['shorthand_story_id'], $field_instances['shorthand_story_extra_html'], $field_instances['shorthand_story_head'], $field_instances['shorthand_story_body']);
+  unset($field_instances['shorthand_story_id'], $field_instances['shorthand_story_extra_html'], $field_instances['shorthand_story_head'], $field_instances['shorthand_story_body'], $field_instances['shorthand_story_version']);
   if (!$results && !$field_instances) {
     $fields = array(
       'shorthand_story_id',
       'shorthand_story_extra_html',
       'shorthand_story_head',
       'shorthand_story_body',
+      'shorthand_story_version',
     );
     foreach ($fields as $field) {
       if ($instance = field_info_instance('node', $field, 'shorthand_story')) {
@@ -180,6 +205,7 @@ function shorthand_update_7001() {
     'shorthand_story_extra_html',
     'shorthand_story_head',
     'shorthand_story_body',
+    'shorthand_story_version',
   );
   foreach ($field_names as $field_name) {
     $instance_info = field_info_instance('node', $field_name, 'shorthand_story');

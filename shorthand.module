@@ -167,19 +167,19 @@ function update_node_data($node) {
     // Allow modules to implement hook_shorthand_story_version_alter.
     drupal_alter('shorthand_story_version', $version, $node->nid);
     $node->shorthand_story_version[LANGUAGE_NONE][0]['value'] = $version;
-    $node->shorthand_story_version[LANGUAGE_NONE][0]['format'] = 'full_html';
+    $node->shorthand_story_version[LANGUAGE_NONE][0]['format'] = variable_get('shorthand_input_format', 'full_html');
 
     $head = _shorthand_fix_content_paths($story['url'], file_get_contents($head_path, FALSE, $context));
     // Allow modules to implement hook_shorthand_story_head_alter.
     drupal_alter('shorthand_story_head', $head, $node->nid);
     $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
-    $node->shorthand_story_head[LANGUAGE_NONE][0]['format'] = 'full_html';
+    $node->shorthand_story_head[LANGUAGE_NONE][0]['format'] = variable_get('shorthand_input_format', 'full_html');
 
     $body = _shorthand_fix_content_paths($story['url'], file_get_contents($body_path, FALSE, $context));
     // Allow modules to implement hook_shorthand_story_body_alter.
     drupal_alter('shorthand_story_body', $body, $node->nid);
     $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
-    $node->shorthand_story_body[LANGUAGE_NONE][0]['format'] = 'full_html';
+    $node->shorthand_story_body[LANGUAGE_NONE][0]['format'] = variable_get('shorthand_input_format', 'full_html');
 
     field_attach_update('node', $node);
   }

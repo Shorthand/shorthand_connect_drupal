@@ -221,3 +221,27 @@ function shorthand_update_7001() {
     variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
   }
 }
+
+
+/**
+ * Update input formats for existing SH stories. - v2.
+ */
+function shorthand_update_7002() {
+  $format = variable_get('shorthand_input_format', 'full_html');
+
+  $field_names = array(
+    'shorthand_story_extra_html',
+    'shorthand_story_head',
+    'shorthand_story_body',
+  );
+
+  $nodes = node_load_multiple(array(), array('type' => 'shorthand_story'));
+  foreach ($nodes as $node) {
+    foreach ($field_names as $field_name) {
+      if (!empty($node->{$field_name}) && $node->{$field_name}[LANGUAGE_NONE][0]['format'] != $format) {
+        $node->{$field_name}[LANGUAGE_NONE][0]['format'] = $format;
+      }
+    }
+    field_attach_update('node', $node);
+  }
+}

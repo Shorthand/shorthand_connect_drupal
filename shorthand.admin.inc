@@ -79,6 +79,21 @@ function shorthand_admin_settings($form, &$form_state) {
     '#required' => TRUE,
   );
 
+  $options = array();
+  $formats = filter_formats();
+  foreach ($formats as $format) {
+    $options[$format->format] = $format->name;
+  }
+
+  $form['shorthand_input_format'] = array(
+    '#type' => 'select',
+    '#title' => t('Text format'),
+    '#options' => $options,
+    '#default_value' => variable_get('shorthand_input_format', filter_default_format()),
+    '#weight' => 10,
+    '#description' => t('The input format to use for Shorthand story text fields.'),
+  );
+
   return system_settings_form($form);
 }
 

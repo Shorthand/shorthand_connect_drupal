@@ -51,3 +51,10 @@ div.clear {
 .field-name-shorthand-story-body {
   display: none;
 }
+div.story_not_found {
+  color: red;
+  padding: 20px;
+}
+#edit-submit[disabled] {
+  color:#ccc;
+}

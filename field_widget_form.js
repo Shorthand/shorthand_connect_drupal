@@ -6,7 +6,7 @@ jQuery(document).ready(function () {
     var $shorthandStoryDiv = jQuery('.field-name-shorthand-story-id');
     $shorthandStoryDiv.each(function () {
         var existingID = jQuery(this).find('input[type=text]').val();
-        console.log(existingID);
+        var foundValidStory = existingID ? false : true;
         if (jQuery(this).find('ul.stories')) {
             jQuery(this).append('<ul class="stories"></ul>');
             var list = jQuery(this).find('ul.stories');
@@ -24,9 +24,14 @@ jQuery(document).ready(function () {
                 if (existingID && existingID == data.id) {
                     selected = 'checked';
                     storySelected = 'selected';
+                    foundValidStory = true;
                 }
                 list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + imageURL + '" /><span>' + data.title + '</span></a></label></li>');
             }
+        }
+        if (!foundValidStory) {
+            jQuery(this).find('ul.stories').html('<div class="story_not_found"><h3>Could not find this story to edit, cannot update!  Updating disabled.</h3><p>Please check that you are using the correct API version, and that the story exists in Shorthand and try again.</p></div>');
+            jQuery("#edit-submit").prop('disabled', true);
         }
     });
     jQuery('li.story input:radio').click(function () {

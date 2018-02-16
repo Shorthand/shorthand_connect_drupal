@@ -3,6 +3,8 @@
  */
 
 jQuery(document).ready(function () {
+    var currentVersion = shStoryData['version'];
+    var showArchivedStories = false;
     var $shorthandStoryDiv = jQuery('.field-name-shorthand-story-id');
     $shorthandStoryDiv.each(function () {
         var existingID = jQuery(this).find('input[type=text]').val();
@@ -14,10 +16,17 @@ jQuery(document).ready(function () {
             jQuery(this).append('<div class="clear"></div>');
             for (var shStory in shStoryData['stories']) {
                 var data = shStoryData['stories'][shStory];
+                var archivedMessage = '';
+                if (shStoryData['version'] !== 'v2' && currentVersion === 'v2' && !showArchivedStories) {
+                    continue;
+                }
                 var serverURL = shStoryData['serverURL'];
                 var imageURL = data.image;
                 if (shStoryData['version'] !== 'v2') {
                     imageURL = serverURL + data.image;
+                    if (currentVersion === 'v2') {
+                        archivedMessage = ' (archived)';
+                    }
                 }
                 var selected = '';
                 var storySelected = '';
@@ -26,7 +35,7 @@ jQuery(document).ready(function () {
                     storySelected = 'selected';
                     foundValidStory = true;
                 }
-                list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + imageURL + '" /><span>' + data.title + '</span></a></label></li>');
+                list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + imageURL + '" /><span>' + data.title + archivedMessage + '</span></a></label></li>');
             }
         }
         if (!foundValidStory) {

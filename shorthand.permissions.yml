@@ -1,0 +1,33 @@
+add shorthand story entities:
+  title: 'Create new Shorthand story entities'
+
+administer shorthand story entities:
+  title: 'Administer Shorthand story entities'
+  description: 'Allow to access the administration form to configure Shorthand story entities.'
+  restrict access: true
+
+delete shorthand story entities:
+  title: 'Delete Shorthand story entities'
+
+edit shorthand story entities:
+  title: 'Edit Shorthand story entities'
+
+access shorthand story overview:
+  title: 'Access the Shorthand story overview page'
+
+view published shorthand story entities:
+  title: 'View published Shorthand story entities'
+
+view unpublished shorthand story entities:
+  title: 'View unpublished Shorthand story entities'
+
+view all shorthand story revisions:
+  title: 'View all Shorthand story revisions'
+
+revert all shorthand story revisions:
+  title: 'Revert all Shorthand story revisions'
+  description: 'Role requires permission <em>view Shorthand story revisions</em> and <em>edit rights</em> for shorthand story entities in question or <em>administer shorthand story entities</em>.'
+
+delete all shorthand story revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view Shorthand story revisions</em> and <em>delete rights</em> for shorthand story entities in question or <em>administer shorthand story entities</em>.'

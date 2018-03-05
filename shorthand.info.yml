@@ -1,0 +1,8 @@
+name: Shorthand
+type: module
+description: A module that allows the publishing of Shorthand stories directly to Drupal.
+core: 8.x
+package: Other
+
+dependencies:
+  - text

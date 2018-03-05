@@ -1,0 +1,7 @@
+services:
+  shorthand.api:
+    class: Drupal\shorthand\ShorthandApi
+    arguments: ['@http_client', '@settings']
+  shorthand.api.v2:
+    class: Drupal\shorthand\ShorthandApi_v2
+    arguments: ['@http_client', '@settings']

@@ -1,0 +1,14 @@
+
+# Shorthand story menu items definition
+entity.shorthand_story.collection:
+  title: 'Shorthand story list'
+  route_name: entity.shorthand_story.collection
+  description: 'List Shorthand story entities'
+  parent: system.admin_content
+  weight: 100
+
+shorthand_story.admin.structure.settings:
+  title: Shorthand story settings
+  description: 'Configure Shorthand story entities'
+  route_name: shorthand_story.settings
+  parent: system.admin_structure

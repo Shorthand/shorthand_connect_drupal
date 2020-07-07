@@ -209,8 +209,8 @@ function shorthand_node_delete($node) {
 function _shorthand_fix_content_paths($assets_path, $content) {
   $version = variable_get('shorthand_version', 'v1');
   if ($version == 'v2') {
-    $content = str_replace('./assets/', $assets_path.'/assets/', $content);
-    $content = str_replace('./theme.min.css', $assets_path.'/theme.min.css', $content);
+    $content = str_replace('./assets/', $assets_path.'/assets/', $content);    
+    $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path.'$1', $content);
     $content = str_replace('./static/', $assets_path . '/static/', $content);
   } else {
     $content = str_replace('./static/', $assets_path . '/static/', $content);

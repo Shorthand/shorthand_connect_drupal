@@ -411,7 +411,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     if ($version == '2') {
       $content = str_replace('./assets/', $assets_path.'/assets/', $content);
       $content = str_replace('./static/', $assets_path.'/static/', $content);
-      $content = str_replace('./theme.min.css', $assets_path.'/theme.min.css', $content);
+      $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path.'$1', $content);
     } else {
       $content = str_replace('./static/', $assets_path.'/static/', $content);
       $content = str_replace('./media/', $assets_path.'/media/', $content);

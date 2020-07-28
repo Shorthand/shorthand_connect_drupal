@@ -2,7 +2,10 @@
 
 namespace Drupal\shorthand\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\ContentEntityForm;
+use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -15,6 +18,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ShorthandStoryForm extends ContentEntityForm {
 
   /**
+   * The book being displayed.
+   *
+   * @var \Drupal\shorthand\Entity\ShorthandStory
+   */
+  protected $entity;
+
+  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountInterface
@@ -24,10 +34,17 @@ class ShorthandStoryForm extends ContentEntityForm {
   /**
    * Initializes an instance of the Shorthand story.
    *
+   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
+   *   The entity repository.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle service.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
-  public function __construct(AccountInterface $current_user) {
+  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL, TimeInterface $time = NULL, AccountInterface $current_user) {
+    parent::__construct($entity_repository, $entity_type_bundle_info, $time);
     $this->currentUser = $current_user;
   }
 
@@ -36,6 +53,9 @@ class ShorthandStoryForm extends ContentEntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('entity.repository'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('datetime.time'),
       $container->get('current_user')
     );
   }

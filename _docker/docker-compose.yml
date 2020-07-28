@@ -1,0 +1,36 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    volumes:
+      - mysqlshd8data:/var/lib/mysql
+    environment:
+      - MYSQL_USER=mysqlu
+      - MYSQL_PASSWORD=mysqlp
+      - MYSQL_DATABASE=mysqldb
+      - MYSQL_ROOT_PASSWORD=rootp
+    restart: always
+  web:
+    image: drupal:8
+    environment:
+      - DOCKER_ENVIRONMENT=Yes
+    links:
+      - mysql
+    ports:
+      - "8181:80"
+      #- "443:443"
+    volumes:
+      - ..:/var/www/html/modules/custom/shorthand
+#  phpmyadmin:
+#    image: phpmyadmin/phpmyadmin
+#    container_name: phpmyadmin
+#    links:
+#      - mysql
+#    environment:
+#      - PMA_ARBITRARY=1
+#    restart: always
+#    ports:
+#      - "8282:80"
+volumes:
+  mysqlshd8data:

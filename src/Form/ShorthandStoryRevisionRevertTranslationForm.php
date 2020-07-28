@@ -68,7 +68,7 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return t('Are you sure you want to revert @language translation to the revision from %revision-date?', ['@language' => $this->languageManager->getLanguageName($this->langcode), '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
+    return $this->t('Are you sure you want to revert @language translation to the revision from %revision-date?', ['@language' => $this->languageManager->getLanguageName($this->langcode), '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
   }
 
   /**
@@ -94,7 +94,7 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
     $revert_untranslated_fields = $form_state->getValue('revert_untranslated_fields');
 
     /** @var \Drupal\shorthand\Entity\ShorthandStoryInterface $default_revision */
-    $latest_revision = $this->ShorthandStoryStorage->load($revision->id());
+    $latest_revision = $this->shorthandStoryStorage->load($revision->id());
     $latest_revision_translation = $latest_revision->getTranslation($this->langcode);
 
     $revision_translation = $revision->getTranslation($this->langcode);

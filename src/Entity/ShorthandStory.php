@@ -89,7 +89,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    */
   public function preSave(EntityStorageInterface $storage) {
 
-    $version = $this->getShorthandAPIVersion();
+    $version = $this->getShorthandApiVersion();
     $apiservice = 'shorthand.api';
     $head_file = '/component_head.html';
     $body_file = '/component_article.html';
@@ -393,7 +393,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    * @return string
    *   The version of the configured Shorthand API
    */
-  protected function getShorthandAPIVersion() {
+  protected function getShorthandApiVersion() {
     return \Drupal::service('settings')->get('shorthand_version', '1');
   }
 
@@ -414,7 +414,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     if ($version == '2') {
       $content = str_replace('./assets/', $assets_path . '/assets/', $content);
       $content = str_replace('./static/', $assets_path . '/static/', $content);
-      $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path.'$1', $content);
+      $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
     }
     else {
       $content = str_replace('./static/', $assets_path . '/static/', $content);

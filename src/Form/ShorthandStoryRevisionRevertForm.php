@@ -30,7 +30,7 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
-  protected $ShorthandStoryStorage;
+  protected $shorthandStoryStorage;
 
   /**
    * The date formatter service.
@@ -48,7 +48,7 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
    *   The date formatter service.
    */
   public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter) {
-    $this->ShorthandStoryStorage = $entity_storage;
+    $this->shorthandStoryStorage = $entity_storage;
     $this->dateFormatter = $date_formatter;
   }
 
@@ -73,7 +73,7 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return t('Are you sure you want to revert to the revision from %revision-date?', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
+    return $this->t('Are you sure you want to revert to the revision from %revision-date?', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime())]);
   }
 
   /**
@@ -87,7 +87,7 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getConfirmText() {
-    return t('Revert');
+    return $this->t('Revert');
   }
 
   /**
@@ -101,7 +101,7 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $shorthand_story_revision = NULL) {
-    $this->revision = $this->ShorthandStoryStorage->loadRevision($shorthand_story_revision);
+    $this->revision = $this->shorthandStoryStorage->loadRevision($shorthand_story_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -116,11 +116,11 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
     $original_revision_timestamp = $this->revision->getRevisionCreationTime();
 
     $this->revision = $this->prepareRevertedRevision($this->revision, $form_state);
-    $this->revision->revision_log = t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
+    $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
     $this->revision->save();
 
     $this->logger('content')->notice('Shorthand story: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
-    drupal_set_message(t('Shorthand story %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
+    drupal_set_message($this->t('Shorthand story %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
     $form_state->setRedirect(
       'entity.shorthand_story.version_history',
       ['shorthand_story' => $this->revision->id()]

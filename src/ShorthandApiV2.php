@@ -12,7 +12,7 @@ use Drupal\Core\Site\Settings;
  * @todo Service should implement a logger i.e. to log Exceptions messages.
  * @todo Catch exceptions when requests fail (host unreachable, timeout, etc.).
  */
-class ShorthandApi_v2 implements ShorthandApiInterface {
+class ShorthandApiV2 implements ShorthandApiInterface {
 
   /**
    * Shorthand API URL.
@@ -63,19 +63,19 @@ class ShorthandApi_v2 implements ShorthandApiInterface {
 
     $decoded = Json::decode((string) $response->getBody());
 
-    $stories = array();
+    $stories = [];
 
     if (isset($decoded)) {
       foreach ($decoded as $storydata) {
-        $story = array(
+        $story = [
           'image' => $storydata['cover'],
           'id' => $storydata['id'],
-          'metadata' => array(
+          'metadata' => [
             'description' => $storydata['description'],
-          ),
+          ],
           'title' => $storydata['title'],
           'story_version' => '' . $storydata['version'],
-        );
+        ];
         $stories[] = $story;
       }
     }

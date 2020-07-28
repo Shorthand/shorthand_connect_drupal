@@ -43,7 +43,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $version = StorySelectFieldWidget::getShorthandAPIVersion();
+    $version = StorySelectFieldWidget::getShorthandApiVersion();
     $apiservice = 'shorthand.api';
     if ($version == '2') {
       $apiservice = 'shorthand.api.v2';
@@ -89,11 +89,12 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
   }
 
   /**
-   * Get the API version of Shorthand
+   * Get the API version of Shorthand.
+   *
    * @return string
    *   The version of the configured Shorthand API
    */
-  protected static function getShorthandAPIVersion() {
+  protected static function getShorthandApiVersion() {
     return \Drupal::service('settings')->get('shorthand_version', '1');
   }
 

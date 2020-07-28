@@ -6,7 +6,10 @@ use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\shorthand\Entity\ShorthandStoryInterface;
+use Drupal\Core\Render\RendererInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ShorthandStoryController.
@@ -14,6 +17,43 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  *  Returns responses for Shorthand story routes.
  */
 class ShorthandStoryController extends ControllerBase implements ContainerInjectionInterface {
+
+  /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
+   * The renderer.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
+   * The Shorthand story controller.
+   *
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer.
+   */
+  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer) {
+    $this->dateFormatter = $date_formatter;
+    $this->renderer = $renderer;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('date.formatter'),
+      $container->get('renderer')
+    );
+  }
 
   /**
    * Displays a Shorthand story  revision.
@@ -42,7 +82,7 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    */
   public function revisionPageTitle($shorthand_story_revision) {
     $shorthand_story = $this->entityManager()->getStorage('shorthand_story')->loadRevision($shorthand_story_revision);
-    return $this->t('Revision of %title from %date', ['%title' => $shorthand_story->label(), '%date' => format_date($shorthand_story->getRevisionCreationTime())]);
+    return $this->t('Revision of %title from %date', ['%title' => $shorthand_story->label(), '%date' => $this->dateFormatter->format($shorthand_story->getRevisionCreationTime())]);
   }
 
   /**
@@ -86,7 +126,7 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
         ];
 
         // Use revision link to link to revisions that are not active.
-        $date = \Drupal::service('date.formatter')->format($revision->getRevisionCreationTime(), 'short');
+        $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $shorthand_story->getRevisionId()) {
           $link = $this->l($date, new Url('entity.shorthand_story.revision', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]));
         }
@@ -101,7 +141,7 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
             '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
             '#context' => [
               'date' => $link,
-              'username' => \Drupal::service('renderer')->renderPlain($username),
+              'username' => $this->renderer->renderPlain($username),
               'message' => ['#markup' => $revision->getRevisionLogMessage(), '#allowed_tags' => Xss::getHtmlTagList()],
             ],
           ],
@@ -127,7 +167,12 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
             $links['revert'] = [
               'title' => $this->t('Revert'),
               'url' => $has_translations ?
-              Url::fromRoute('entity.shorthand_story.translation_revert', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid, 'langcode' => $langcode]) :
+              Url::fromRoute('entity.shorthand_story.translation_revert', [
+                'shorthand_story' => $shorthand_story->id(),
+                'shorthand_story_revision' => $vid,
+                'langcode' => $langcode,
+              ]
+              ) :
               Url::fromRoute('entity.shorthand_story.revision_revert', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]),
             ];
           }

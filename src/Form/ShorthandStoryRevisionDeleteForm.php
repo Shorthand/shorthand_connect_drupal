@@ -29,7 +29,7 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
-  protected $ShorthandStoryStorage;
+  protected $shorthandStoryStorage;
 
   /**
    * The database connection.
@@ -47,7 +47,7 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    *   The database connection.
    */
   public function __construct(EntityStorageInterface $entity_storage, Connection $connection) {
-    $this->ShorthandStoryStorage = $entity_storage;
+    $this->shorthandStoryStorage = $entity_storage;
     $this->connection = $connection;
   }
 
@@ -73,7 +73,7 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return t('Are you sure you want to delete the revision from %revision-date?', ['%revision-date' => format_date($this->revision->getRevisionCreationTime())]);
+    return $this->t('Are you sure you want to delete the revision from %revision-date?', ['%revision-date' => format_date($this->revision->getRevisionCreationTime())]);
   }
 
   /**
@@ -87,14 +87,14 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getConfirmText() {
-    return t('Delete');
+    return $this->t('Delete');
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $shorthand_story_revision = NULL) {
-    $this->revision = $this->ShorthandStoryStorage->loadRevision($shorthand_story_revision);
+    $this->revision = $this->shorthandStoryStorage->loadRevision($shorthand_story_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -104,10 +104,10 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->ShorthandStoryStorage->deleteRevision($this->revision->getRevisionId());
+    $this->shorthandStoryStorage->deleteRevision($this->revision->getRevisionId());
 
     $this->logger('content')->notice('Shorthand story: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
-    drupal_set_message(t('Revision from %revision-date of Shorthand story %title has been deleted.', ['%revision-date' => format_date($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
+    drupal_set_message($this->t('Revision from %revision-date of Shorthand story %title has been deleted.', ['%revision-date' => format_date($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
     $form_state->setRedirect(
       'entity.shorthand_story.canonical',
        ['shorthand_story' => $this->revision->id()]

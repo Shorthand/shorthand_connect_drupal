@@ -65,16 +65,16 @@ class ShorthandApi_v2 implements ShorthandApiInterface {
 
     $stories = array();
 
-    if(isset($decoded)) {
-      foreach($decoded as $storydata) {
+    if (isset($decoded)) {
+      foreach ($decoded as $storydata) {
         $story = array(
           'image' => $storydata['cover'],
           'id' => $storydata['id'],
           'metadata' => array(
-            'description' => $storydata['description']
+            'description' => $storydata['description'],
           ),
           'title' => $storydata['title'],
-          'story_version' => ''.$storydata['version']
+          'story_version' => '' . $storydata['version'],
         );
         $stories[] = $story;
       }
@@ -107,7 +107,7 @@ class ShorthandApi_v2 implements ShorthandApiInterface {
    */
   protected function buildHeaders() {
     return [
-      'Authorization' => ' Token '.$this->settings->get('shorthand_token'),
+      'Authorization' => ' Token ' . $this->settings->get('shorthand_token'),
     ];
   }
 

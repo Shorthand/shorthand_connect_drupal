@@ -388,7 +388,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   }
 
   /**
-   * Get the API version of Shorthand
+   * Get the API version of Shorthand.
+   *
    * @return string
    *   The version of the configured Shorthand API
    */
@@ -401,20 +402,23 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *
    * @param string $content
    *   Shorthand Story's HTML markup to be processed.
+   * @param string $version
+   *   Shorthand API Version, either 1 or 2.
    *
    * @return string
    *   Content processed with all path relative to Drupal's Shorthand story
    *   storage path.
    */
-  protected function fixStoryContentPaths($content, $version='1') {
+  protected function fixStoryContentPaths($content, $version = '1') {
     $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
     if ($version == '2') {
-      $content = str_replace('./assets/', $assets_path.'/assets/', $content);
-      $content = str_replace('./static/', $assets_path.'/static/', $content);
+      $content = str_replace('./assets/', $assets_path . '/assets/', $content);
+      $content = str_replace('./static/', $assets_path . '/static/', $content);
       $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path.'$1', $content);
-    } else {
-      $content = str_replace('./static/', $assets_path.'/static/', $content);
-      $content = str_replace('./media/', $assets_path.'/media/', $content);
+    }
+    else {
+      $content = str_replace('./static/', $assets_path . '/static/', $content);
+      $content = str_replace('./media/', $assets_path . '/media/', $content);
     }
     return $content;
   }

@@ -4,6 +4,12 @@ shorthand_story.settings_tab:
   title: 'Settings'
   base_route: shorthand_story.settings
 
+entity.shorthand_story.collection:
+  title: 'Shorthand'
+  route_name: entity.shorthand_story.collection
+  base_route: system.admin_content
+  weight: 100
+
 entity.shorthand_story.canonical:
   route_name: entity.shorthand_story.canonical
   base_route: entity.shorthand_story.canonical
@@ -20,7 +26,7 @@ entity.shorthand_story.version_history:
   title: 'Revisions'
 
 entity.shorthand_story.delete_form:
-  route_name:  entity.shorthand_story.delete_form
-  base_route:  entity.shorthand_story.canonical
+  route_name: entity.shorthand_story.delete_form
+  base_route: entity.shorthand_story.canonical
   title: Delete
   weight: 10

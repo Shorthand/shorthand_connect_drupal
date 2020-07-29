@@ -14,7 +14,7 @@ docker-compose --file _docker/docker-compose.yml exec web bash -c "php -r \"copy
 docker-compose --file _docker/docker-compose.yml exec web bash -c "composer init --quiet && composer require drush/drush:~8"
 
 # Install drupal, reset admin password (user admin, password `drupal`) and enable shorthand.
-docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get update && apt-get install -y default-mysql-client vim && cp sites/default/default.settings.php sites/default/settings.php && chmod 777 sites/default/settings.php && ./vendor/bin/drush -l default site-install standard -y --db-url='mysql://root:rootp@mysql/mysqldb' && ./vendor/bin/drush -l default vset site_name -y 'Shorthand 7' && ./vendor/bin/drush -l default pm-enable -y shorthand && ./vendor/bin/drush -l default  -y upwd --password='drupal' 'admin' && mkdir -p sites/default/files && chmod 777 -R sites/default/files && ./vendor/bin/drush -l default cache-clear all && ./vendor/bin/drush -l 0.0.0.0:7171 user-login"
+docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get update && apt-get install -y default-mysql-client vim git && cp sites/default/default.settings.php sites/default/settings.php && chmod 777 sites/default/settings.php && ./vendor/bin/drush -l default site-install standard -y --db-url='mysql://root:rootp@mysql/mysqldb' && ./vendor/bin/drush -l default vset site_name -y 'Shorthand 7' && ./vendor/bin/drush -l default pm-enable -y shorthand && ./vendor/bin/drush -l default  -y upwd --password='drupal' 'admin' && mkdir -p sites/default/files && chmod 777 -R sites/default/files && ./vendor/bin/drush -l default cache-clear all && ./vendor/bin/drush -l 0.0.0.0:7171 user-login"
 
 To edit settings run `vi sites/default/settings.php` inside the container.
 
@@ -23,6 +23,22 @@ docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l 
 
 # To reset password.
 docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l 0.0.0.0:7171 user-login
+```
+
+To run `phpcs` code linting
+
+```
+# Install Drupal code.
+docker-compose --file _docker/docker-compose.yml exec web composer require drupal/coder
+
+# Setup code linting.
+docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/phpcs --config-set installed_paths /var/www/html/vendor/drupal/coder/coder_sniffer
+
+# Run code linting.
+docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/phpcs -p --standard=DrupalPractice,Drupal --extensions=php,module,inc,install,test,profile,theme /var/www/html/sites/all/modules/custom/shorthand
+
+# Run code fixing.
+docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/phpcbf -p --standard=DrupalPractice,Drupal --extensions=php,module,inc,install,test,profile,theme /var/www/html/sites/all/modules/custom/shorthand
 ```
 
 To stop and remove containers run

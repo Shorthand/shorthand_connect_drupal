@@ -5,8 +5,7 @@
  * Connects with Shorthand and allows publishing stories to Drupal site.
  */
 
-$version = variable_get('shorthand_version', 'v1');
-if ($version == 'v2') {
+if (variable_get('shorthand_version', 'v1') == 'v2') {
   require_once 'includes/api-v2.php';
 }
 else {
@@ -55,8 +54,8 @@ function shorthand_menu_alter(&$items) {
  */
 function shorthand_account_check() {
   // $shorthand_user_id = variable_get('shorthand_user_id', '');.
-  $shorthand_token = variable_get('shorthand_token', '');
-  if (empty($shorthand_token)) {
+  $shorthand_token = _shorthand_get_token();
+  if (!_shorthand_check_node_permission() || empty($shorthand_token)) {
     $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', ['@page' => url('admin/config/services/shorthand')]);
     drupal_get_messages();
     drupal_set_message($message, 'warning');
@@ -171,13 +170,27 @@ function update_node_data($node) {
     $node->shorthand_story_version[LANGUAGE_NONE][0]['value'] = $version;
     $node->shorthand_story_version[LANGUAGE_NONE][0]['format'] = variable_get('shorthand_input_format', 'full_html');
 
-    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($head_path, FALSE, $context));
+    // Handle texts in other languages.
+    $head = mb_convert_encoding(
+      file_get_contents($head_path, FALSE, $context),
+      "HTML-ENTITIES",
+      "UTF-8"
+    );
+
+    $head = _shorthand_fix_content_paths($story['url'], $head);
     // Allow modules to implement hook_shorthand_story_head_alter.
     drupal_alter('shorthand_story_head', $head, $node->nid);
     $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
     $node->shorthand_story_head[LANGUAGE_NONE][0]['format'] = variable_get('shorthand_input_format', 'full_html');
 
-    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($body_path, FALSE, $context));
+    // Handle texts in other languages.
+    $body = mb_convert_encoding(
+      file_get_contents($body_path, FALSE, $context),
+      "HTML-ENTITIES",
+      "UTF-8"
+    );
+
+    $body = _shorthand_fix_content_paths($story['url'], $body);
     // Allow modules to implement hook_shorthand_story_body_alter.
     drupal_alter('shorthand_story_body', $body, $node->nid);
     $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
@@ -391,4 +404,34 @@ function _shorthand_unzip_file($file, $directory) {
   $archiver->extract($directory);
 
   return $archiver;
+}
+
+/**
+ * Check permission to create new SH.
+ *
+ * @return bool
+ *   TRUE if user has access.
+ */
+function _shorthand_check_node_permission() {
+  return user_access('administer nodes') || user_access('create shorthand_story content');
+}
+
+/**
+ * Get token depending on the currently set version.
+ *
+ * @return string
+ *   Token for selected version.
+ */
+function _shorthand_get_token() {
+  $token = &drupal_static(__FUNCTION__);
+  if (!isset($token)) {
+    $version = variable_get('shorthand_version', 'v1');
+    if ($version == 'v2') {
+      $token = variable_get('shorthand_token_v2', '');
+    }
+    else {
+      $token = variable_get('shorthand_token_v1', '');
+    }
+  }
+  return $token;
 }

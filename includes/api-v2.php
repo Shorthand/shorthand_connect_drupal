@@ -56,7 +56,7 @@ function sh_get_stories() {
 
   $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
 
-  $token = variable_get('shorthand_token', '');
+  $token = _shorthand_get_token();
 
   $stories = [];
 

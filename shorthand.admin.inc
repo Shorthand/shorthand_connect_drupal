@@ -54,10 +54,12 @@ function shorthand_admin_settings(array $form, array &$form_state) {
       </style>
     ',
   ];
+
   $user_id_class = "v1row";
   if (variable_get('shorthand_version', 'v1') == 'v2') {
     $user_id_class = "v1row v1row-hidden";
   }
+
   $form['shorthand_user_id'] = [
     '#type' => 'textfield',
     '#title' => t('User ID'),
@@ -69,6 +71,7 @@ function shorthand_admin_settings(array $form, array &$form_state) {
     '#prefix' => '<div class="' . $user_id_class . '">',
     '#suffix' => '</div>',
   ];
+
   $form['shorthand_token_v1'] = [
     '#type' => 'textfield',
     '#title' => t('V1 API Token'),
@@ -76,15 +79,16 @@ function shorthand_admin_settings(array $form, array &$form_state) {
     '#size' => 40,
     '#maxlength' => 40,
     '#description' => t('Your Shorthand v1 API Token.'),
-  );
-  $form['shorthand_token_v2'] = array(
+  ];
+
+  $form['shorthand_token_v2'] = [
     '#type' => 'textfield',
     '#title' => t('V2 API Token'),
     '#default_value' => variable_get('shorthand_token_v2', ''),
     '#size' => 40,
     '#maxlength' => 40,
     '#description' => t('Your Shorthand v2 API Token.'),
-  );
+  ];
 
   $options = [];
   $formats = filter_formats();

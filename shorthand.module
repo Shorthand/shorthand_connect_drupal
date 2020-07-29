@@ -280,7 +280,40 @@ function shorthand_preprocess_html(&$vars) {
     }
 
     if (!empty($node->shorthand_story_head[LANGUAGE_NONE][0]['value'])) {
-      $vars['shorthand_story_head'] = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];
+      $html_head = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];
+      $files_url = file_create_url('public://');
+      $files_url .= 'shorthand';
+      $files_url .= '/' . $node->nid;
+      $files_url .= '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
+      $node_url = url(current_path(), ['absolute' => TRUE]);
+
+      if (strpos($html_head, 'amphtml') !== FALSE) {
+        // Replace AMP url if present.
+        $amp_url = $files_url;
+        $amp_url .= '/amp-index.html';
+        $new_amp_link = "<link rel=\"amphtml\" href=\"$amp_url\">";
+        $html_head = preg_replace('/<link.*rel="amphtml"(.[^>]*>)/i', $new_amp_link, $html_head);
+      }
+
+      if (strpos($html_head, 'og:url') !== FALSE) {
+        // Replace og:url url if present.
+        $new_og_url = "<meta property=\"og:url\" content=\"$node_url\">";
+        $html_head = preg_replace('/<meta.*property="og:url"(.[^>]*>)/i', $new_og_url, $html_head);
+      }
+
+      if (strpos($html_head, 'og:image') !== FALSE) {
+        // Replace og:image url if present.
+        $new_og_image = '<meta property="og:image" content="' . $files_url . '/assets';
+        $html_head = preg_replace('/<meta.*property="og:image".*assets/i', $new_og_image, $html_head);
+      }
+
+      if (strpos($html_head, 'twitter:image') !== FALSE) {
+        // Replace twitter:image url if present.
+        $new_twitter_image = '<meta name="twitter:image" content="' . $files_url . '/assets';
+        $html_head = preg_replace('/<meta.*name="twitter:image".*assets/i', $new_twitter_image, $html_head);
+      }
+
+      $vars['shorthand_story_head'] = $html_head;
     }
 
     $vars['theme_hook_suggestions'][] = 'html__' . $node->type;
@@ -292,9 +325,21 @@ function shorthand_preprocess_html(&$vars) {
  */
 function shorthand_preprocess_node(&$vars) {
   if ($vars['type'] == 'shorthand_story') {
-    @$vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
-    @$vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
-    @$vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
+    $shorthand_fields = [
+      'shorthand_story_id' => 'story_id',
+      'shorthand_story_body' => 'story_body',
+      'shorthand_story_extra_html' => 'story_extra_html',
+    ];
+
+    foreach ($shorthand_fields as $shorthand_field => $shorthand_var) {
+      $vars[$shorthand_var] = '';
+      if (isset($vars[$shorthand_field][LANGUAGE_NONE][0]['value'])) {
+        $vars[$shorthand_var] = $vars[$shorthand_field][LANGUAGE_NONE][0]['value'];
+      }
+      elseif (isset($vars[$shorthand_field][0]['value'])) {
+        $vars[$shorthand_var] = $vars[$shorthand_field][0]['value'];
+      }
+    }
   }
 }
 

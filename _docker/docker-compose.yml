@@ -1,0 +1,26 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    volumes:
+      - mysqlshd7data:/var/lib/mysql
+    environment:
+      - MYSQL_USER=mysqlu
+      - MYSQL_PASSWORD=mysqlp
+      - MYSQL_DATABASE=mysqldb
+      - MYSQL_ROOT_PASSWORD=rootp
+    restart: always
+  web:
+    image: drupal:7
+    environment:
+      - DOCKER_ENVIRONMENT=Yes
+    links:
+      - mysql
+    ports:
+      - "7171:80"
+      #- "443:443"
+    volumes:
+      - ..:/var/www/html/sites/all/modules/custom/shorthand
+volumes:
+  mysqlshd7data:

@@ -56,7 +56,7 @@ function sh_get_stories() {
 
   $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
 
-  $token = variable_get('shorthand_token', '');
+  $token = _shorthand_get_token();
 
   $stories = array();
 
@@ -117,7 +117,7 @@ function sh_copy_story($node_id, $story_id) {
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 
   $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-  $token = variable_get('shorthand_token', '');
+  $token = _shorthand_get_token();
   $user_id = variable_get('shorthand_user_id', '');
 
   $story = array();
@@ -130,11 +130,11 @@ function sh_copy_story($node_id, $story_id) {
     $zipfile = tempnam('/tmp', 'sh_zip');
     $ziphandle = fopen($zipfile, "w");
     curl_setopt($ch, CURLOPT_POST, 0);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Token '.$token));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Token '.$token));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_FILE, $ziphandle);
     $response = curl_exec($ch);
 

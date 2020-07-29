@@ -56,7 +56,7 @@ function sh_get_stories() {
 
   $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com/');
 
-  $token = variable_get('shorthand_token', '');
+  $token = _shorthand_get_token();
   $user_id = variable_get('shorthand_user_id', '');
 
   $stories = array();
@@ -101,7 +101,7 @@ function sh_copy_story($node_id, $story_id) {
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 
   $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
-  $token = variable_get('shorthand_token', '');
+  $token = _shorthand_get_token();
   $user_id = variable_get('shorthand_user_id', '');
 
   $story = array();

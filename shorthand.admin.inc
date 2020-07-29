@@ -69,14 +69,21 @@ function shorthand_admin_settings($form, &$form_state) {
     '#prefix' => '<div class="'.$user_id_class.'">',
     '#suffix' => '</div>',
   );
-  $form['shorthand_token'] = array(
+  $form['shorthand_token_v1'] = array(
     '#type' => 'textfield',
-    '#title' => t('API Token'),
-    '#default_value' => variable_get('shorthand_token', ''),
+    '#title' => t('V1 API Token'),
+    '#default_value' => variable_get('shorthand_token_v1', ''),
     '#size' => 40,
     '#maxlength' => 40,
-    '#description' => t('Your Shorthand API Token.'),
-    '#required' => TRUE,
+    '#description' => t('Your Shorthand v1 API Token.'),
+  );
+  $form['shorthand_token_v2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('V2 API Token'),
+    '#default_value' => variable_get('shorthand_token_v2', ''),
+    '#size' => 40,
+    '#maxlength' => 40,
+    '#description' => t('Your Shorthand v2 API Token.'),
   );
 
   $options = array();
@@ -103,18 +110,21 @@ function shorthand_admin_settings($form, &$form_state) {
 function shorthand_admin_settings_validate($form, &$form_state) {
   $version = $form_state['values']['shorthand_version'];
   if ($version == 'v2') {
+    $token_var = 'shorthand_token_v2';
     $user_id = 0;
-  } else {
+  }
+  else {
+    $token_var = 'shorthand_token_v1';
     $user_id = $form_state['values']['shorthand_user_id'];
   }
-  $token = $form_state['values']['shorthand_token'];
+
   if (!is_numeric($user_id)) {
     form_set_error('shorthand_user_id', t('User ID must be an integer.'));
   }
   else {
-    $data = sh_get_profile($user_id, $token, $version);
+    $data = sh_get_profile($user_id, $form_state['values'][$token_var], $version);
     if (!isset($data->username)) {
-      form_set_error('shorthand_token', t('Invalid token.'));
+      form_set_error($token_var, t('Invalid token.'));
     }
   }
 }

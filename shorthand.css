@@ -3,13 +3,16 @@
   margin-right: 0;
   width: auto;
 }
+
 #content {
   width: 100% !important;
 }
+
 #content .section,
 .sidebar .section {
   padding: 0;
 }
+
 div.sidebar {
   display: none !important;
 }

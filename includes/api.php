@@ -16,31 +16,31 @@
  * @return array|mixed
  *   Data from SHorthand API.
  */
- function sh_get_profile($user_id, $token, $version = null) {
-  $valid_token = FALSE;
-  $data = array();
+function sh_get_profile($user_id, $token, $version = NULL) {
+  $data = [];
   if ($version == 'v1') {
     $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
     if ($token && $user_id) {
       $url = $serverURL . '/api/profile/';
       $vars = 'user=' . $user_id . '&token=' . $token;
-      $response = drupal_http_request($url, array(
+      $response = drupal_http_request($url, [
         'method' => 'POST',
         'data' => $vars,
-        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-      ));
+        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+      ]);
       $data = json_decode($response->data);
     }
-  } else {
+  }
+  else {
     $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
     if ($token) {
       $url = $serverURL . '/v2/token-info';
-      $response = drupal_http_request($url, array(
+      $response = drupal_http_request($url, [
         'method' => 'GET',
-        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
-      ));
+        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+      ]);
       $data = json_decode($response->data);
-      $data->username = $data->name.' ('.$data->token_type.' Token)';
+      $data->username = $data->name . ' (' . $data->token_type . ' Token)';
     }
   }
   return $data;
@@ -59,21 +59,20 @@ function sh_get_stories() {
   $token = variable_get('shorthand_token', '');
   $user_id = variable_get('shorthand_user_id', '');
 
-  $stories = array();
+  $stories = [];
 
   // Attempt to connect to the server.
   if ($token && $user_id) {
     $url = $serverURL . '/api/index/';
     $vars = 'user=' . $user_id . '&token=' . $token;
-    $response = drupal_http_request($url, array(
+    $response = drupal_http_request($url, [
       'method' => 'POST',
       'data' => $vars,
-      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-    ));
+      'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+    ]);
     if (isset($response->data)) {
       $data = json_decode($response->data);
       if (isset($data->stories)) {
-        $valid_token = TRUE;
         $stories = $data->stories;
       }
     }
@@ -104,7 +103,7 @@ function sh_copy_story($node_id, $story_id) {
   $token = variable_get('shorthand_token', '');
   $user_id = variable_get('shorthand_user_id', '');
 
-  $story = array();
+  $story = [];
 
   // Attempt to connect to the server.
   if ($token && $user_id) {
@@ -120,7 +119,7 @@ function sh_copy_story($node_id, $story_id) {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, variable_get('shorthand_curlopt_ssl_verifypeer', 1));
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_FILE, $ziphandle);
     $response = curl_exec($ch);
@@ -137,12 +136,12 @@ function sh_copy_story($node_id, $story_id) {
 
     }
     else {
-      // log.
-      $story['error'] = array(
+      // Add error to log.
+      $story['error'] = [
         'pretty' => 'Could not upload file',
         'error' => curl_error($ch),
         'response' => $response,
-      );
+      ];
     }
   }
 

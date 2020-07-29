@@ -16,31 +16,31 @@
  * @return array|mixed
  *   Data from SHorthand API.
  */
-function sh_get_profile($user_id, $token, $version = null) {
-  $valid_token = FALSE;
-  $data = array();
+function sh_get_profile($user_id, $token, $version = NULL) {
+  $data = [];
   if ($version == 'v1') {
     $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
     if ($token && $user_id) {
       $url = $serverURL . '/api/profile/';
       $vars = 'user=' . $user_id . '&token=' . $token;
-      $response = drupal_http_request($url, array(
+      $response = drupal_http_request($url, [
         'method' => 'POST',
         'data' => $vars,
-        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
-      ));
+        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+      ]);
       $data = json_decode($response->data);
     }
-  } else {
+  }
+  else {
     $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
     if ($token) {
       $url = $serverURL . '/v2/token-info';
-      $response = drupal_http_request($url, array(
+      $response = drupal_http_request($url, [
         'method' => 'GET',
-        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
-      ));
+        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+      ]);
       $data = json_decode($response->data);
-      $data->username = $data->name.' ('.$data->token_type.' Token)';
+      $data->username = $data->name . ' (' . $data->token_type . ' Token)';
     }
   }
   return $data;
@@ -58,38 +58,37 @@ function sh_get_stories() {
 
   $token = variable_get('shorthand_token', '');
 
-  $stories = array();
+  $stories = [];
 
   // Attempt to connect to the server.
   if ($token) {
     $url = $serverURL . '/v2/stories/';
-    $response = drupal_http_request($url, array(
+    $response = drupal_http_request($url, [
       'method' => 'GET',
-      'headers' => array('Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token '.$token),
-    ));
+      'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+    ]);
     if (isset($response->data)) {
       $data = json_decode($response->data);
-      if(isset($data)) {
-        $stories = array();
-        $valid_token = true;
-        //Something went wrong
+      if (isset($data)) {
+        $stories = [];
+
         if (isset($data->status)) {
-          return null;
+          return NULL;
         }
-        foreach($data as $storydata) {
+        foreach ($data as $storydata) {
           $description = '';
           if (isset($storydata->description)) {
             $description = $storydata->description;
           }
-          $story = array(
+          $story = [
             'image' => $storydata->cover,
             'id' => $storydata->id,
-            'metadata' => (object)array(
-              'description' => $description
-            ),
+            'metadata' => (object) [
+              'description' => $description,
+            ],
             'title' => $storydata->title,
-          );
-          $stories[] = (object)$story;
+          ];
+          $stories[] = (object) $story;
         }
       }
     }
@@ -118,9 +117,8 @@ function sh_copy_story($node_id, $story_id) {
 
   $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
   $token = variable_get('shorthand_token', '');
-  $user_id = variable_get('shorthand_user_id', '');
-
-  $story = array();
+  // $user_id = variable_get('shorthand_user_id', '');.
+  $story = [];
 
   // Attempt to connect to the server.
   if ($token) {
@@ -130,37 +128,37 @@ function sh_copy_story($node_id, $story_id) {
     $zipfile = tempnam('/tmp', 'sh_zip');
     $ziphandle = fopen($zipfile, "w");
     curl_setopt($ch, CURLOPT_POST, 0);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Token '.$token));
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Token ' . $token]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, variable_get('shorthand_curlopt_ssl_verifypeer', 1));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_FILE, $ziphandle);
     $response = curl_exec($ch);
 
     if ($response == 1) {
       try {
-        shorthand_archive_extract($zipfile, $destination_path, true);
+        shorthand_archive_extract($zipfile, $destination_path, TRUE);
         $story['path'] = $destination_path;
         $story['url'] = $destination_url;
       }
       catch (Exception $e) {
         // log.
-        $story['error'] = array(
+        $story['error'] = [
           'pretty' => 'Could not add story',
           'error' => $e,
           'response' => $response,
-        );
+        ];
       }
 
     }
     else {
       // log.
-      $story['error'] = array(
+      $story['error'] = [
         'pretty' => 'Could not upload file',
         'error' => curl_error($ch),
         'response' => $response,
-      );
+      ];
     }
   }
 

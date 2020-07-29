@@ -13,15 +13,15 @@
  * @param array $form_state
  *   The current state of the form.
  */
-function shorthand_admin_settings($form, &$form_state) {
-  $form['shorthand_version'] = array(
+function shorthand_admin_settings(array $form, array &$form_state) {
+  $form['shorthand_version'] = [
     '#type' => 'select',
     '#title' => t('Shorthand API Version'),
     '#default_value' => variable_get('shorthand_version', 'v1'),
-    '#options' => array(
+    '#options' => [
       'v1' => t('Version 1'),
       'v2' => t('Version 2'),
-    ),
+    ],
     '#description' => t('Shorthand Version'),
     '#required' => TRUE,
     '#suffix' => '
@@ -52,13 +52,13 @@ function shorthand_admin_settings($form, &$form_state) {
           display: none;
         }
       </style>
-    '
-  );
+    ',
+  ];
   $user_id_class = "v1row";
   if (variable_get('shorthand_version', 'v1') == 'v2') {
     $user_id_class = "v1row v1row-hidden";
   }
-  $form['shorthand_user_id'] = array(
+  $form['shorthand_user_id'] = [
     '#type' => 'textfield',
     '#title' => t('User ID'),
     '#default_value' => variable_get('shorthand_user_id', ''),
@@ -66,10 +66,10 @@ function shorthand_admin_settings($form, &$form_state) {
     '#maxlength' => 6,
     '#description' => t('Your Shorthand User ID.'),
     '#required' => TRUE,
-    '#prefix' => '<div class="'.$user_id_class.'">',
+    '#prefix' => '<div class="' . $user_id_class . '">',
     '#suffix' => '</div>',
-  );
-  $form['shorthand_token'] = array(
+  ];
+  $form['shorthand_token'] = [
     '#type' => 'textfield',
     '#title' => t('API Token'),
     '#default_value' => variable_get('shorthand_token', ''),
@@ -77,22 +77,34 @@ function shorthand_admin_settings($form, &$form_state) {
     '#maxlength' => 40,
     '#description' => t('Your Shorthand API Token.'),
     '#required' => TRUE,
-  );
+  ];
 
-  $options = array();
+  $options = [];
   $formats = filter_formats();
   foreach ($formats as $format) {
     $options[$format->format] = $format->name;
   }
 
-  $form['shorthand_input_format'] = array(
+  $form['shorthand_input_format'] = [
     '#type' => 'select',
     '#title' => t('Text format'),
     '#options' => $options,
     '#default_value' => variable_get('shorthand_input_format', filter_default_format()),
     '#weight' => 10,
     '#description' => t('The input format to use for Shorthand story text fields.'),
-  );
+  ];
+
+  $form['shorthand_curlopt_ssl_verifypeer'] = [
+    '#type' => 'select',
+    '#title' => t('Curl SSL verification'),
+    '#options' => [
+      0 => 0,
+      1 => 1,
+    ],
+    '#default_value' => variable_get('shorthand_curlopt_ssl_verifypeer', 1),
+    '#weight' => 12,
+    '#description' => t('CURLOPT_SSL_VERIFYPEER option for curl command to download the story.'),
+  ];
 
   return system_settings_form($form);
 }
@@ -104,9 +116,11 @@ function shorthand_admin_settings_validate($form, &$form_state) {
   $version = $form_state['values']['shorthand_version'];
   if ($version == 'v2') {
     $user_id = 0;
-  } else {
+  }
+  else {
     $user_id = $form_state['values']['shorthand_user_id'];
   }
+
   $token = $form_state['values']['shorthand_token'];
   if (!is_numeric($user_id)) {
     form_set_error('shorthand_user_id', t('User ID must be an integer.'));

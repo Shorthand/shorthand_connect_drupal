@@ -8,7 +8,8 @@
 $version = variable_get('shorthand_version', 'v1');
 if ($version == 'v2') {
   require_once 'includes/api-v2.php';
-} else {
+}
+else {
   require_once 'includes/api.php';
 }
 
@@ -29,16 +30,16 @@ function shorthand_help($path, $arg) {
  * Implements hook_menu().
  */
 function shorthand_menu() {
-  $items = array();
-  $items['admin/config/services/shorthand'] = array(
+  $items = [];
+  $items['admin/config/services/shorthand'] = [
     'title' => 'Shorthand Connect settings',
     'description' => 'Configure Shorthand integration for story publishing',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('shorthand_admin_settings'),
-    'access arguments' => array('access administration pages'),
+    'page arguments' => ['shorthand_admin_settings'],
+    'access arguments' => ['administer site configuration'],
     'type' => MENU_NORMAL_ITEM,
     'file' => 'shorthand.admin.inc',
-  );
+  ];
   return $items;
 }
 
@@ -53,10 +54,10 @@ function shorthand_menu_alter(&$items) {
  * Prevent addition of Shorthand nodes without account details.
  */
 function shorthand_account_check() {
-  $shorthand_user_id = variable_get('shorthand_user_id', '');
+  // $shorthand_user_id = variable_get('shorthand_user_id', '');.
   $shorthand_token = variable_get('shorthand_token', '');
   if (empty($shorthand_token)) {
-    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
+    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', ['@page' => url('admin/config/services/shorthand')]);
     drupal_get_messages();
     drupal_set_message($message, 'warning');
     return FALSE;
@@ -68,18 +69,18 @@ function shorthand_account_check() {
  * Implements hook_field_widget_info().
  */
 function shorthand_field_widget_info() {
-  return array(
-    'shorthand_story_select' => array(
+  return [
+    'shorthand_story_select' => [
       'label' => 'Shorthand stories selection',
-      'field types' => array('text'),
-      'settings' => array(
+      'field types' => ['text'],
+      'settings' => [
         'size' => '60',
-      ),
-      'behaviors' => array(
+      ],
+      'behaviors' => [
         'multiple values' => FIELD_BEHAVIOR_DEFAULT,
-      ),
-    ),
-  );
+      ],
+    ],
+  ];
 }
 
 /**
@@ -97,23 +98,24 @@ function shorthand_field_widget_form(&$form, &$form_state, $field, $instance, $l
       $data['version'] = $version;
       if ($version == 'v2') {
         $data['serverURL'] = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-      } else {
+      }
+      else {
         $data['serverURL'] = variable_get('shorthand_server_url', 'https://app.shorthand.com');
       }
       $data['stories'] = sh_get_stories();
 
       drupal_add_js('var shStoryData=' . json_encode($data) . ';', 'inline');
 
-      $widget += array(
+      $widget += [
         '#type' => 'textfield',
         '#default_value' => $value,
         '#size' => 10,
         '#maxlength' => 10,
-        '#attached' => array(
-          'css' => array(drupal_get_path('module', 'shorthand') . '/field_widget_form.css'),
-          'js' => array(drupal_get_path('module', 'shorthand') . '/field_widget_form.js'),
-        ),
-      );
+        '#attached' => [
+          'css' => [drupal_get_path('module', 'shorthand') . '/field_widget_form.css'],
+          'js' => [drupal_get_path('module', 'shorthand') . '/field_widget_form.js'],
+        ],
+      ];
       break;
   }
   $element['value'] = $widget;
@@ -152,7 +154,7 @@ function update_node_data($node) {
     }
 
     // Handle texts in other languages.
-    $opts = array('http' => array('header' => 'Accept-Charset: UTF-8, *;q=0'));
+    $opts = ['http' => ['header' => 'Accept-Charset: UTF-8, *;q=0']];
     $context = stream_context_create($opts);
 
     $version = variable_get('shorthand_version', 'v1');
@@ -209,16 +211,20 @@ function shorthand_node_delete($node) {
 function _shorthand_fix_content_paths($assets_path, $content) {
   $version = variable_get('shorthand_version', 'v1');
   if ($version == 'v2') {
-    $content = str_replace('./assets/', $assets_path.'/assets/', $content);    
-    $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path.'$1', $content);
+    $content = str_replace('./assets/', $assets_path . '/assets/', $content);
+    $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
     $content = str_replace('./static/', $assets_path . '/static/', $content);
-  } else {
+  }
+  else {
     $content = str_replace('./static/', $assets_path . '/static/', $content);
     $content = str_replace('./media/', $assets_path . '/media/', $content);
   }
   return $content;
 }
 
+/**
+ * Implements hook_theme_registry_alter().
+ */
 function shorthand_theme_registry_alter(&$theme_registry) {
   // Defined path to the current module.
   $module_path = drupal_get_path('module', 'shorthand');
@@ -251,10 +257,10 @@ function shorthand_preprocess_page(&$variables) {
 function shorthand_preprocess_html(&$vars) {
   $node = menu_get_object();
   if ($node && $node->type == 'shorthand_story' && $node->nid) {
-    drupal_add_css(drupal_get_path('module', 'shorthand') . '/shorthand.css', array(
+    drupal_add_css(drupal_get_path('module', 'shorthand') . '/shorthand.css', [
       'group' => CSS_THEME,
       'weight' => 1000,
-    ));
+    ]);
 
     if (!empty($node->shorthand_story_version[LANGUAGE_NONE][0]['value'])) {
       $vars['shorthand_story_version'] = $node->shorthand_story_version[LANGUAGE_NONE][0]['value'];
@@ -289,15 +295,14 @@ function shorthand_preprocess_node(&$vars) {
  *
  * @return \ArchiverZip|\ZipArchive
  *   Either ArchiverZip from Drupal or PHP ZipArchive.
- *
- * @throws \Exception
  */
-function shorthand_archive_extract($file, $directory, $version2archive=false) {
+function shorthand_archive_extract($file, $directory, $version2archive = FALSE) {
   if (class_exists('ZipArchive', FALSE)) {
     $archiver = new ZipArchive();
 
     if (!$archiver->open($file)) {
-      throw new Exception(t('Cannot extract %file, not a valid zip archive.', array('%file' => $file)));
+      $exception = t('Cannot extract %file, not a valid zip archive.', ['%file' => $file]);
+      drupal_set_message($exception, 'warning');
     }
 
     if (file_exists($directory)) {
@@ -305,15 +310,17 @@ function shorthand_archive_extract($file, $directory, $version2archive=false) {
     }
 
     if ($version2archive) {
-      $unzipdir = tempnam('/tmp', 'sh_unzip').'_dir';
+      $unzipdir = tempnam('/tmp', 'sh_unzip') . '_dir';
       if ($archiver->numFiles == 0) {
-        throw new Exception(t('Cannot extract story, bad story download (%archiver).', array('%archiver' => $archiver)));
-        die();
+        $exception = t('Cannot extract story, bad story download (%archiver).', ['%archiver' => $archiver]);
+        drupal_set_message($exception, 'error');
+        return $archiver;
       }
       $archiver->extractTo($unzipdir);
       $archiver->close();
-      $resp = shorthand_xcopy($unzipdir, $directory);
-    } else {
+      shorthand_xcopy($unzipdir, $directory);
+    }
+    else {
       $archiver->extractTo($directory);
       $archiver->close();
     }
@@ -325,28 +332,36 @@ function shorthand_archive_extract($file, $directory, $version2archive=false) {
   return _shorthand_unzip_file($file, $directory);
 }
 
+/**
+ * Copy shorthand file and folders.
+ */
 function shorthand_xcopy($source, $dest) {
-  // Simple copy for a file
+
+  // Simple copy for a file.
   if (is_file($source)) {
     return file_unmanaged_copy($source, $dest);
   }
-  // Make destination directory
+
+  // Make destination directory.
   if (!is_dir($dest)) {
-    drupal_mkdir($dest, null, true);
+    drupal_mkdir($dest, NULL, TRUE);
   }
-  // Loop through the folder
+
+  // Loop through the folder.
   $dir = dir($source);
-  while (false !== $entry = $dir->read()) {
-    // Skip pointers
+  while (FALSE !== $entry = $dir->read()) {
+
+    // Skip pointers.
     if ($entry == '.' || $entry == '..') {
-        continue;
+      continue;
     }
-    // Deep copy directories
+    // Deep copy directories.
     shorthand_xcopy("$source/$entry", "$dest/$entry");
   }
-  // Clean up
+
+  // Clean up.
   $dir->close();
-  return true;
+  return TRUE;
 }
 
 /**
@@ -359,15 +374,14 @@ function shorthand_xcopy($source, $dest) {
  *
  * @return \ArchiverZip
  *   ArchiverZip from Drupal
- *
- * @throws \Exception
  */
 function _shorthand_unzip_file($file, $directory) {
   module_load_include('inc', 'system', 'system.archiver');
 
   $archiver = new ArchiverZip($file);
   if (!$archiver) {
-    throw new Exception(t('Cannot extract %file, not a valid zip archive.', array('%file' => $file)));
+    $exception = t('Cannot extract %file, not a valid zip archive.', ['%file' => $file]);
+    drupal_set_message($exception, 'warning');
   }
 
   if (file_exists($directory)) {

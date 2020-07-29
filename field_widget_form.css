@@ -4,13 +4,16 @@ li.story {
   margin: 5px;
   list-style-type: none;
 }
+
 li.story.selected label {
   background: #5b9dd9;
   color: #eee;
 }
+
 li.story input {
   display: none !important;
 }
+
 li.story label {
   display: block;
   background: #fafafa;
@@ -19,22 +22,27 @@ li.story label {
   padding-top: 5px;
   border: 1px solid #eeeeee;
 }
+
 li.story label:hover {
   border: 1px solid #5b9dd9;
 }
+
 li.story label span {
   display: block;
   font-weight: bold;
 }
+
 div.clear {
   clear: left;
 }
+
 #codearea {
   border: 1px solid #999999;
-  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  font-family: Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
   width: 100%;
   height: 300px;
 }
+
 .field-widget-shorthand-story-select ul.stories {
   max-height: 400px;
   overflow-y: scroll;
@@ -42,19 +50,24 @@ div.clear {
   margin: 0;
   margin-top: -16px;
 }
+
 .field-name-shorthand-story-id input[type=text] {
   display: none;
 }
+
 .field-name-shorthand-story-head {
   display: none;
 }
+
 .field-name-shorthand-story-body {
   display: none;
 }
+
 div.story_not_found {
   color: red;
   padding: 20px;
 }
+
 #edit-submit[disabled] {
-  color:#ccc;
+  color: #ccc;
 }

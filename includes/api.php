@@ -95,7 +95,7 @@ function sh_get_stories() {
  *   Array of story data.
  */
 function sh_copy_story($node_id, $story_id) {
-  $destination = drupal_realpath('public://');
+  $destination = variable_get('file_directory_path', conf_path() . '/files');
   $destination_path = $destination . '/shorthand/' . $node_id . '/' . $story_id;
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 

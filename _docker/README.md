@@ -19,7 +19,10 @@ docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get updat
 To edit settings run `vi sites/default/settings.php` inside the container.
 
 # To clear cache.
-docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l default cache:clear all
+docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l default cache-clear all
+
+# To enable devel module.
+docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l default pm-enable devel
 
 # To reset password.
 docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l 0.0.0.0:7171 user-login

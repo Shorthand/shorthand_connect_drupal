@@ -35,7 +35,6 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    */
   public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-
     $this->shorthandApi = $shorthandApi;
   }
 
@@ -43,18 +42,13 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $version = StorySelectFieldWidget::getShorthandApiVersion();
-    $apiservice = 'shorthand.api';
-    if ($version == '2') {
-      $apiservice = 'shorthand.api.v2';
-    }
     return new static(
-        $plugin_id,
-        $plugin_definition,
-        $configuration['field_definition'],
-        $configuration['settings'],
-        $configuration['third_party_settings'],
-        $container->get($apiservice)
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['third_party_settings'],
+      $container->get('shorthand.api.v2')
     );
   }
 
@@ -78,11 +72,14 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    *   Array of Shorthand stories, keyed by Story ID.
    */
   protected function buildStoriesList() {
-    $stories = $this->shorthandApi->getStories();
-
-    $list = [];
-    foreach ($stories as $story) {
-      $list[$story['id']] = $story['title'];
+    if (($stories = $this->shorthandApi->getStories()) !== FALSE) {
+      $list = [];
+      foreach ($stories as $story) {
+        $list[$story['id']] = $story['title'];
+      }
+    }
+    else {
+      $list = [0 => 'Cannot retrieve stories'];
     }
 
     return $list;

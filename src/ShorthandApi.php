@@ -3,6 +3,7 @@
 namespace Drupal\shorthand;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\File\FileSystemInterface;
 use GuzzleHttp\Client;
 use Drupal\Core\Site\Settings;
 
@@ -25,6 +26,7 @@ class ShorthandApi implements ShorthandApiInterface {
    * @var \GuzzleHttp\Client
    */
   protected $httpClient;
+
   /**
    * Drupal\Core\Site\Settings definition.
    *
@@ -33,16 +35,26 @@ class ShorthandApi implements ShorthandApiInterface {
   protected $settings;
 
   /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Constructs a new ShorthandApi object.
    *
    * @param \GuzzleHttp\Client $http_client
    *   Http client service instance.
    * @param \Drupal\Core\Site\Settings $settings
    *   Settings service instance.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
    */
-  public function __construct(Client $http_client, Settings $settings) {
+  public function __construct(Client $http_client, Settings $settings, FileSystemInterface $file_system) {
     $this->httpClient = $http_client;
     $this->settings = $settings;
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -112,7 +124,7 @@ class ShorthandApi implements ShorthandApiInterface {
    *   Path.
    */
   protected function getStoryFileTempPath() {
-    return file_directory_temp() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
+    return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
   }
 
 }

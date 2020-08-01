@@ -2,6 +2,7 @@
 
 namespace Drupal\shorthand\Entity;
 
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\RevisionableContentEntityBase;
@@ -50,6 +51,11 @@ use Drupal\user\UserInterface;
  *     "langcode" = "langcode",
  *     "status" = "status",
  *   },
+ *   revision_metadata_keys = {
+ *     "revision_user" = "revision_user",
+ *     "revision_created" = "revision_created",
+ *     "revision_log_message" = "revision_log_message",
+ *   },
  *   links = {
  *     "canonical" = "/shorthand-story/{shorthand_story}",
  *     "add-form" = "/admin/content/shorthand-story/add",
@@ -90,15 +96,12 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   public function preSave(EntityStorageInterface $storage) {
 
     $version = $this->getShorthandApiVersion();
-    $apiservice = 'shorthand.api';
-    $head_file = '/component_head.html';
-    $body_file = '/component_article.html';
-
-    if ($version == '2') {
-      $apiservice = 'shorthand.api.v2';
-      $head_file = '/head.html';
-      $body_file = '/article.html';
-    }
+    // $apiservice = 'shorthand.api';.
+    // $head_file = '/component_head.html';.
+    // $body_file = '/component_article.html';.
+    $apiservice = 'shorthand.api.v2';
+    $head_file = '/head.html';
+    $body_file = '/article.html';
 
     // Download and extract Story .zip file.
     if ($this->isNew()) {
@@ -106,12 +109,14 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       $input_format = \Drupal::service('settings')->get('shorthand_input_format', filter_default_format());
 
       /** @var \Drupal\Core\Archiver\ArchiverInterface $archiver */
-      $archiver = archiver_get_archiver($file);
+      $file_system = \Drupal::service('file_system');
+      $filepath = $file_system->realpath($file);
+      $archiver = \Drupal::service('plugin.manager.archiver')->getInstance(['filepath' => $filepath]);
 
       $destination_uri = $this->getShorthandStoryFilesStorageUri();
-      file_prepare_directory($destination_uri, FILE_CREATE_DIRECTORY);
+      $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
 
-      $destination_path = \Drupal::service('file_system')->realpath($destination_uri);
+      $destination_path = $file_system->realpath($destination_uri);
       $archiver->extract($destination_path);
 
       // Store head and body, handling text in any language.
@@ -374,7 +379,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     parent::delete();
 
     // Delete Shorthand story files.
-    file_unmanaged_delete_recursive($this->getShorthandStoryFilesStorageUri());
+    \Drupal::service('file_system')->deleteRecursive($this->getShorthandStoryFilesStorageUri());
   }
 
   /**

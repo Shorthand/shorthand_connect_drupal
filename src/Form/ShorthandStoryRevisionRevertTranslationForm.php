@@ -2,6 +2,7 @@
 
 namespace Drupal\shorthand\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -32,6 +33,13 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
   protected $languageManager;
 
   /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $time;
+
+  /**
    * Constructs a new ShorthandStoryRevisionRevertTranslationForm.
    *
    * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
@@ -40,10 +48,13 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
    *   The date formatter service.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    */
-  public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter, LanguageManagerInterface $language_manager) {
+  public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter, LanguageManagerInterface $language_manager, TimeInterface $time) {
     parent::__construct($entity_storage, $date_formatter);
     $this->languageManager = $language_manager;
+    $this->time = $time;
   }
 
   /**
@@ -51,9 +62,10 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity.manager')->getStorage('shorthand_story'),
+      $container->get('entity_type.manager')->getStorage('shorthand_story'),
       $container->get('date.formatter'),
-      $container->get('language_manager')
+      $container->get('language_manager'),
+      $container->get('datetime.time')
     );
   }
 
@@ -107,7 +119,7 @@ class ShorthandStoryRevisionRevertTranslationForm extends ShorthandStoryRevision
 
     $latest_revision_translation->setNewRevision();
     $latest_revision_translation->isDefaultRevision(TRUE);
-    $revision->setRevisionCreationTime(REQUEST_TIME);
+    $revision->setRevisionCreationTime($this->time->getRequestTime());
 
     return $latest_revision_translation;
   }

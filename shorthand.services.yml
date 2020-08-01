@@ -1,7 +1,10 @@
 services:
-  shorthand.api:
-    class: Drupal\shorthand\ShorthandApi
-    arguments: ['@http_client', '@settings']
+#  shorthand.api:
+#    class: Drupal\shorthand\ShorthandApi
+#    arguments: ['@http_client', '@settings', '@file_system']
   shorthand.api.v2:
     class: Drupal\shorthand\ShorthandApiV2
-    arguments: ['@http_client', '@settings']
+    arguments: ['@http_client', '@settings', '@file_system', '@messenger', '@logger.channel.shorthand']
+  logger.channel.shorthand:
+    parent: logger.channel_base
+    arguments: ['shorthand']

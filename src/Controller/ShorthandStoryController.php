@@ -2,9 +2,11 @@
 
 namespace Drupal\shorthand\Controller;
 
+use Drupal\Core\Link;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\shorthand\Entity\ShorthandStoryInterface;
@@ -33,16 +35,26 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
   protected $renderer;
 
   /**
+   * The mocked entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The Shorthand story controller.
    *
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date formatter service.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    */
-  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer) {
+  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer, EntityTypeManagerInterface $entity_type_manager) {
     $this->dateFormatter = $date_formatter;
     $this->renderer = $renderer;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -51,7 +63,8 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('date.formatter'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -65,8 +78,11 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    *   An array suitable for drupal_render().
    */
   public function revisionShow($shorthand_story_revision) {
-    $shorthand_story = $this->entityManager()->getStorage('shorthand_story')->loadRevision($shorthand_story_revision);
-    $view_builder = $this->entityManager()->getViewBuilder('shorthand_story');
+    $shorthand_story = $this->entityTypeManager
+      ->getStorage('shorthand_story')
+      ->loadRevision($shorthand_story_revision);
+    $view_builder = $this->entityTypeManager
+      ->getViewBuilder('shorthand_story');
 
     return $view_builder->view($shorthand_story);
   }
@@ -81,7 +97,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    *   The page title.
    */
   public function revisionPageTitle($shorthand_story_revision) {
-    $shorthand_story = $this->entityManager()->getStorage('shorthand_story')->loadRevision($shorthand_story_revision);
+    $shorthand_story = $this->entityTypeManager
+      ->getStorage('shorthand_story')
+      ->loadRevision($shorthand_story_revision);
     return $this->t('Revision of %title from %date', ['%title' => $shorthand_story->label(), '%date' => $this->dateFormatter->format($shorthand_story->getRevisionCreationTime())]);
   }
 
@@ -100,7 +118,7 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
     $langname = $shorthand_story->language()->getName();
     $languages = $shorthand_story->getTranslationLanguages();
     $has_translations = (count($languages) > 1);
-    $shorthand_story_storage = $this->entityManager()->getStorage('shorthand_story');
+    $shorthand_story_storage = $this->entityTypeManager->getStorage('shorthand_story');
 
     $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $shorthand_story->label()]) : $this->t('Revisions for %title', ['%title' => $shorthand_story->label()]);
     $header = [$this->t('Revision'), $this->t('Operations')];
@@ -128,10 +146,11 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
         // Use revision link to link to revisions that are not active.
         $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $shorthand_story->getRevisionId()) {
-          $link = $this->l($date, new Url('entity.shorthand_story.revision', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]));
+          $link = Link::fromTextAndUrl($date, new Url('entity.shorthand_story.revision',
+            ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]));
         }
         else {
-          $link = $shorthand_story->link($date);
+          $link = $shorthand_story->toLink($date)->toString();
         }
 
         $row = [];

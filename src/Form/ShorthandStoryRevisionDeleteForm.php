@@ -3,6 +3,7 @@
 namespace Drupal\shorthand\Form;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -39,26 +40,37 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
   protected $connection;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
    * Constructs a new ShorthandStoryRevisionDeleteForm.
    *
    * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
    *   The entity storage.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
    */
-  public function __construct(EntityStorageInterface $entity_storage, Connection $connection) {
+  public function __construct(EntityStorageInterface $entity_storage, Connection $connection, DateFormatterInterface $date_formatter) {
     $this->shorthandStoryStorage = $entity_storage;
     $this->connection = $connection;
+    $this->dateFormatter = $date_formatter;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $entity_manager = $container->get('entity.manager');
+    $entity_manager = $container->get('entity_type.manager');
     return new static(
       $entity_manager->getStorage('shorthand_story'),
-      $container->get('database')
+      $container->get('database'),
+      $container->get('date.formatter')
     );
   }
 
@@ -73,7 +85,9 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return $this->t('Are you sure you want to delete the revision from %revision-date?', ['%revision-date' => format_date($this->revision->getRevisionCreationTime())]);
+    return $this->t('Are you sure you want to delete the revision from %revision-date?', [
+      '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
+    ]);
   }
 
   /**
@@ -107,7 +121,10 @@ class ShorthandStoryRevisionDeleteForm extends ConfirmFormBase {
     $this->shorthandStoryStorage->deleteRevision($this->revision->getRevisionId());
 
     $this->logger('content')->notice('Shorthand story: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
-    drupal_set_message($this->t('Revision from %revision-date of Shorthand story %title has been deleted.', ['%revision-date' => format_date($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
+    $this->messenger()->addStatus($this->t('Revision from %revision-date of Shorthand story %title has been deleted.', [
+      '%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()),
+      '%title' => $this->revision->label(),
+    ]));
     $form_state->setRedirect(
       'entity.shorthand_story.canonical',
        ['shorthand_story' => $this->revision->id()]

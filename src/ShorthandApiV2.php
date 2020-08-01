@@ -3,16 +3,20 @@
 namespace Drupal\shorthand;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Client;
 use Drupal\Core\Site\Settings;
+use GuzzleHttp\Exception\BadResponseException;
+use Psr\Log\LoggerInterface;
 
 /**
- * Class ShorthandApi.
- *
- * @todo Service should implement a logger i.e. to log Exceptions messages.
- * @todo Catch exceptions when requests fail (host unreachable, timeout, etc.).
+ * Class ShorthandApiV2.
  */
 class ShorthandApiV2 implements ShorthandApiInterface {
+
+  use StringTranslationTrait;
 
   /**
    * Shorthand API URL.
@@ -25,6 +29,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * @var \GuzzleHttp\Client
    */
   protected $httpClient;
+
   /**
    * Drupal\Core\Site\Settings definition.
    *
@@ -33,16 +38,46 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   protected $settings;
 
   /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * The logger instance.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * Constructs a new ShorthandApi object.
    *
    * @param \GuzzleHttp\Client $http_client
    *   Http client service instance.
    * @param \Drupal\Core\Site\Settings $settings
    *   Settings service instance.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger interface.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger instance.
    */
-  public function __construct(Client $http_client, Settings $settings) {
+  public function __construct(Client $http_client, Settings $settings, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger) {
     $this->httpClient = $http_client;
     $this->settings = $settings;
+    $this->fileSystem = $file_system;
+    $this->messenger = $messenger;
+    $this->logger = $logger;
   }
 
   /**
@@ -56,31 +91,42 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * {@inheritdoc}
    */
   public function getStories() {
-    $response = $this->httpClient->get('v2/stories', [
-      'base_uri' => $this->getBaseUri(),
-      'headers' => $this->buildHeaders(),
-    ]);
-
-    $decoded = Json::decode((string) $response->getBody());
 
     $stories = [];
 
-    if (isset($decoded)) {
-      foreach ($decoded as $storydata) {
-        $story = [
-          'image' => $storydata['cover'],
-          'id' => $storydata['id'],
-          'metadata' => [
-            'description' => $storydata['description'],
-          ],
-          'title' => $storydata['title'],
-          'story_version' => '' . $storydata['version'],
-        ];
-        $stories[] = $story;
+    try {
+      $response = $this->httpClient->get('v2/stories', [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders(),
+      ]);
+
+      $decoded = Json::decode((string) $response->getBody());
+
+      if (isset($decoded)) {
+        foreach ($decoded as $storydata) {
+          $story = [
+            'image' => $storydata['cover'],
+            'id' => $storydata['id'],
+            'metadata' => [
+              'description' => $storydata['description'],
+            ],
+            'title' => $storydata['title'],
+            'story_version' => '' . $storydata['version'],
+          ];
+          $stories[] = $story;
+        }
       }
+
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', ['@message' => $message]));
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+      return FALSE;
     }
 
     return $stories;
+
   }
 
   /**
@@ -88,13 +134,20 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   public function getStory($id) {
 
-    $temp_path = $this->getStoryFileTempPath();
-    $this->httpClient->get('v2/stories/' . $id, [
-      'base_uri' => $this->getBaseUri(),
-      'headers' => $this->buildHeaders(),
-      'sink' => $temp_path,
-      'timeout' => 120,
-    ]);
+    try {
+      $temp_path = $this->getStoryFileTempPath();
+      $this->httpClient->get('v2/stories/' . $id, [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders(),
+        'sink' => $temp_path,
+        'timeout' => 120,
+      ]);
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($message);
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+    }
 
     return $temp_path;
   }
@@ -128,7 +181,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   Path.
    */
   protected function getStoryFileTempPath() {
-    return file_directory_temp() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
+    return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
   }
 
 }

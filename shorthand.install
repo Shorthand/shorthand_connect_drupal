@@ -13,5 +13,5 @@ use Drupal\shorthand\Entity\ShorthandStory;
 function shorthand_uninstall() {
   // Existing stories deletion is already handled by the module uninstaller, so
   // remove just the files/shorthand folder, if exists.
-  file_unmanaged_delete_recursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
+  \Drupal::service('file_system')->deleteRecursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
 }

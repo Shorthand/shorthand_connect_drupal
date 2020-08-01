@@ -6,44 +6,25 @@
  */
 
 /**
- * Returns an object of the users profile.
+ * Verifies API token.
  *
- * @param int $user_id
- *   The user id of the Shorthand account.
  * @param string $token
  *   The Shorthand API token.
  *
- * @return array|mixed
- *   Data from SHorthand API.
+ * @return bool
+ *   TRUE if API is valid.
  */
-function sh_get_profile($user_id, $token, $version = NULL) {
-  $data = [];
-  if ($version == 'v1') {
-    $serverURL = variable_get('shorthand_server_url', 'https://app.shorthand.com');
-    if ($token && $user_id) {
-      $url = $serverURL . '/api/profile/';
-      $vars = 'user=' . $user_id . '&token=' . $token;
-      $response = drupal_http_request($url, [
-        'method' => 'POST',
-        'data' => $vars,
-        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
-      ]);
-      $data = json_decode($response->data);
-    }
+function sh_is_token_valid($token) {
+  $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
+  if ($token) {
+    $url = $serverURL . '/v2/token-info';
+    $response = drupal_http_request($url, [
+      'method' => 'GET',
+      'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+    ]);
+    return $response->code == '200';
   }
-  else {
-    $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-    if ($token) {
-      $url = $serverURL . '/v2/token-info';
-      $response = drupal_http_request($url, [
-        'method' => 'GET',
-        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
-      ]);
-      $data = json_decode($response->data);
-      $data->username = $data->name . ' (' . $data->token_type . ' Token)';
-    }
-  }
-  return $data;
+  return FALSE;
 }
 
 /**
@@ -116,8 +97,8 @@ function sh_copy_story($node_id, $story_id) {
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
 
   $serverURL = variable_get('shorthand_server_v2_url', 'https://api.shorthand.com');
-  $token = variable_get('shorthand_token', '');
-  // $user_id = variable_get('shorthand_user_id', '');.
+  $token = _shorthand_get_token();
+
   $story = [];
 
   // Attempt to connect to the server.
@@ -143,7 +124,6 @@ function sh_copy_story($node_id, $story_id) {
         $story['url'] = $destination_url;
       }
       catch (Exception $e) {
-        // log.
         $story['error'] = [
           'pretty' => 'Could not add story',
           'error' => $e,
@@ -153,7 +133,6 @@ function sh_copy_story($node_id, $story_id) {
 
     }
     else {
-      // log.
       $story['error'] = [
         'pretty' => 'Could not upload file',
         'error' => curl_error($ch),

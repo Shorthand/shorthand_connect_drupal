@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the Shorthand module.
+ * Shorthand module .install file.
  */
 
 /**
@@ -10,7 +10,7 @@
  */
 function shorthand_install() {
   variable_set('shorthand_curlopt_ssl_verifypeer', 1);
-  variable_set('shorthand_server_url', 'https://app.shorthand.com');
+  variable_set('shorthand_version', 'v2');
   variable_set('shorthand_server_v2_url', 'https://api.shorthand.com');
 
   $t = get_t();
@@ -157,11 +157,14 @@ function shorthand_install() {
 }
 
 /**
- * Implements hook_uninstall().
+ * Uninstall tasks.
  */
 function shorthand_uninstall() {
+  variable_del('shorthand_version');
   variable_del('shorthand_server_url');
+  variable_del('shorthand_server_v2_url');
   variable_del('shorthand_token');
+  variable_del('shorthand_token_v2');
   variable_del('shorthand_user_id');
   variable_del('shorthand_curlopt_ssl_verifypeer');
 
@@ -175,7 +178,13 @@ function shorthand_uninstall() {
     ->execute();
 
   $field_instances = field_info_instances('node', 'shorthand_story');
-  unset($field_instances['shorthand_story_id'], $field_instances['shorthand_story_extra_html'], $field_instances['shorthand_story_head'], $field_instances['shorthand_story_body'], $field_instances['shorthand_story_version']);
+  unset(
+    $field_instances['shorthand_story_id'],
+    $field_instances['shorthand_story_extra_html'],
+    $field_instances['shorthand_story_head'],
+    $field_instances['shorthand_story_body'],
+    $field_instances['shorthand_story_version']
+  );
   if (!$results && !$field_instances) {
     $fields = [
       'shorthand_story_id',
@@ -252,4 +261,19 @@ function shorthand_update_7002() {
  */
 function shorthand_update_7003() {
   variable_set('shorthand_curlopt_ssl_verifypeer', 0);
+}
+
+/**
+ * Removed Shorthand API v1.
+ */
+function shorthand_update_7004() {
+  // Remove v1 variables.
+  variable_del('shorthand_server_url');
+  variable_del('shorthand_token');
+  variable_del('shorthand_user_id');
+  // Set v2 variables.
+  variable_set('shorthand_version', 'v2');
+  variable_set('shorthand_server_v2_url', 'https://api.shorthand.com');
+  $t = get_t();
+  return $t('Shorthand module has been updated. API v1 has been deprecated. Please update Shorthand settings.');
 }

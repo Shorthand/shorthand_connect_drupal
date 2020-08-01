@@ -13,7 +13,6 @@ jQuery(document).ready(function () {
     if (jQuery(this).find('ul.stories')) {
       jQuery(this).append('<ul class="stories"></ul>');
       var list = jQuery(this).find('ul.stories');
-      console.log(list);
       jQuery(this).append('<div class="clear"></div>');
       for (var shStory in shStoryData['stories']) {
         var data = shStoryData['stories'][shStory];
@@ -41,7 +40,7 @@ jQuery(document).ready(function () {
         list.append('<li class="story ' + storySelected + '"><label><input name="story_id" type="radio" value="' + data.id + '" ' + selected + ' /><img width="150" src="' + imageURL + '" /><span>' + data.title + archivedMessage + '</span></a></label></li>');
       }
     }
-    if (!foundValidStory) {
+    if (!foundValidStory || !shStoryData['stories']) {
       jQuery(this).find('ul.stories').html('<div class="story_not_found"><h3>Could not find this story to edit, cannot update!  Updating disabled.</h3><p>Please check that you are using the correct API version, and that the story exists in Shorthand and try again.</p></div>');
       jQuery("#edit-submit").prop('disabled', true);
     }

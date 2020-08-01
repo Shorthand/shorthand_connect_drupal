@@ -104,38 +104,37 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     $body_file = '/article.html';
 
     // Download and extract Story .zip file.
-    if ($this->isNew()) {
-      $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId());
-      $input_format = \Drupal::service('settings')->get('shorthand_input_format', filter_default_format());
+    // @todo: Allow user an ability to resync the story.
+    $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId());
+    $input_format = \Drupal::service('settings')->get('shorthand_input_format', filter_default_format());
 
-      /** @var \Drupal\Core\Archiver\ArchiverInterface $archiver */
-      $file_system = \Drupal::service('file_system');
-      $filepath = $file_system->realpath($file);
-      $archiver = \Drupal::service('plugin.manager.archiver')->getInstance(['filepath' => $filepath]);
+    /** @var \Drupal\Core\Archiver\ArchiverInterface $archiver */
+    $file_system = \Drupal::service('file_system');
+    $filepath = $file_system->realpath($file);
+    $archiver = \Drupal::service('plugin.manager.archiver')->getInstance(['filepath' => $filepath]);
 
-      $destination_uri = $this->getShorthandStoryFilesStorageUri();
-      $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
+    $destination_uri = $this->getShorthandStoryFilesStorageUri();
+    $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
 
-      $destination_path = $file_system->realpath($destination_uri);
-      $archiver->extract($destination_path);
+    $destination_path = $file_system->realpath($destination_uri);
+    $archiver->extract($destination_path);
 
-      // Store head and body, handling text in any language.
-      $head = mb_convert_encoding(
-        file_get_contents($destination_path . $head_file),
-        "HTML-ENTITIES",
-        "UTF-8"
-      );
-      $this->head->value = $this->fixStoryContentPaths($head, $version);
-      $this->head->format = $input_format;
+    // Store head and body, handling text in any language.
+    $head = mb_convert_encoding(
+      file_get_contents($destination_path . $head_file),
+      "HTML-ENTITIES",
+      "UTF-8"
+    );
+    $this->head->value = $this->fixStoryContentPaths($head, $version);
+    $this->head->format = $input_format;
 
-      $body = mb_convert_encoding(
-        file_get_contents($destination_path . $body_file),
-        "HTML-ENTITIES",
-        "UTF-8"
-      );
-      $this->body->value = $this->fixStoryContentPaths($body, $version);
-      $this->body->format = $input_format;
-    }
+    $body = mb_convert_encoding(
+      file_get_contents($destination_path . $body_file),
+      "HTML-ENTITIES",
+      "UTF-8"
+    );
+    $this->body->value = $this->fixStoryContentPaths($body, $version);
+    $this->body->format = $input_format;
 
     // Let parent preSave() run so other modules can alter the content before
     // being saved.

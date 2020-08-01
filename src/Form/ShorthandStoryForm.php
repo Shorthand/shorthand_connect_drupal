@@ -121,6 +121,7 @@ class ShorthandStoryForm extends ContentEntityForm {
       ];
     }
 
+    // Check formats.
     $formats = array_keys(filter_formats());
     $input_format = $this->settings->get('shorthand_input_format', filter_default_format());
     $format_fail = !in_array($input_format, $formats);

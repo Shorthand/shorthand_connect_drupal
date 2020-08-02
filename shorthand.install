@@ -8,10 +8,42 @@
 use Drupal\shorthand\Entity\ShorthandStory;
 
 /**
- * Uninstall tasks.
+ * Implements hook_install().
+ */
+function shorthand_install() {
+  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+  $config
+    ->set('version', '2')
+    ->save();
+}
+
+/**
+ * Implements hook_uninstall().
  */
 function shorthand_uninstall() {
+  // Delete config settings.
+  \Drupal::configFactory()->getEditable('shorthand.settings')->delete();
+
   // Existing stories deletion is already handled by the module uninstaller, so
   // remove just the files/shorthand folder, if exists.
   \Drupal::service('file_system')->deleteRecursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
+}
+
+/**
+ * Convert settings to config.
+ */
+function shorthand_8001(&$sandbox) {
+  $settings = \Drupal::service('settings');
+  if ($settings->get('shorthand_version') == '2') {
+    $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+    $config
+      ->set('token', $settings->get('shorthand_token'))
+      ->set('version', $settings->get('shorthand_version'))
+      ->set('input_format', $settings->get('shorthand_input_format'))
+      ->save();
+    return t('Shorthand settings have been migrated from settings.php.');
+  }
+  else {
+    return t('Please update Shorthand settings.');
+  }
 }

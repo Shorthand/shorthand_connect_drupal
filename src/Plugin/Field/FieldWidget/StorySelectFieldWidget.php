@@ -85,14 +85,4 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
     return $list;
   }
 
-  /**
-   * Get the API version of Shorthand.
-   *
-   * @return string
-   *   The version of the configured Shorthand API
-   */
-  protected static function getShorthandApiVersion() {
-    return \Drupal::service('settings')->get('shorthand_version', '1');
-  }
-
 }

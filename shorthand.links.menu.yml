@@ -7,8 +7,8 @@ entity.shorthand_story.collection:
   parent: system.admin_content
   weight: 100
 
-shorthand_story.admin.structure.settings:
-  title: Shorthand story settings
-  description: 'Configure Shorthand story entities'
-  route_name: shorthand_story.settings
-  parent: system.admin_structure
+shorthand.admin_settings_form:
+  title: 'Shorthand settings'
+  parent: system.admin_config_content
+  description: 'Configure Shorthand settings'
+  route_name: shorthand.admin_settings_form

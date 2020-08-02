@@ -2,7 +2,6 @@
 
 namespace Drupal\shorthand\Controller;
 
-use Drupal\Core\Link;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -138,28 +137,18 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
       // Only show revisions that are affected by the language that is being
       // displayed.
       if ($revision->hasTranslation($langcode) && $revision->getTranslation($langcode)->isRevisionTranslationAffected()) {
+        $row = [];
         $username = [
           '#theme' => 'username',
           '#account' => $revision->getRevisionUser(),
         ];
-
-        // Use revision link to link to revisions that are not active.
         $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
-        if ($vid != $shorthand_story->getRevisionId()) {
-          $link = Link::fromTextAndUrl($date, new Url('entity.shorthand_story.revision',
-            ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]));
-        }
-        else {
-          $link = $shorthand_story->toLink($date)->toString();
-        }
-
-        $row = [];
         $column = [
           'data' => [
             '#type' => 'inline_template',
             '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
             '#context' => [
-              'date' => $link,
+              'date' => $date,
               'username' => $this->renderer->renderPlain($username),
               'message' => ['#markup' => $revision->getRevisionLogMessage(), '#allowed_tags' => Xss::getHtmlTagList()],
             ],

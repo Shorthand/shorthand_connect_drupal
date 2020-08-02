@@ -96,9 +96,6 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   public function preSave(EntityStorageInterface $storage) {
 
     $version = $this->getShorthandApiVersion();
-    // $apiservice = 'shorthand.api';.
-    // $head_file = '/component_head.html';.
-    // $body_file = '/component_article.html';.
     $apiservice = 'shorthand.api.v2';
     $head_file = '/head.html';
     $body_file = '/article.html';
@@ -398,7 +395,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *   The version of the configured Shorthand API
    */
   protected function getShorthandApiVersion() {
-    return \Drupal::service('settings')->get('shorthand_version', '1');
+    $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+    return $config->get('version', '2');
   }
 
   /**
@@ -407,23 +405,20 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    * @param string $content
    *   Shorthand Story's HTML markup to be processed.
    * @param string $version
-   *   Shorthand API Version, either 1 or 2.
+   *   Shorthand API Version, defsault is 2.
    *
    * @return string
    *   Content processed with all path relative to Drupal's Shorthand story
    *   storage path.
    */
-  protected function fixStoryContentPaths($content, $version = '1') {
+  protected function fixStoryContentPaths($content, $version = '2') {
     $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
     if ($version == '2') {
       $content = str_replace('./assets/', $assets_path . '/assets/', $content);
       $content = str_replace('./static/', $assets_path . '/static/', $content);
       $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
     }
-    else {
-      $content = str_replace('./static/', $assets_path . '/static/', $content);
-      $content = str_replace('./media/', $assets_path . '/media/', $content);
-    }
+
     return $content;
   }
 

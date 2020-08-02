@@ -20,11 +20,6 @@ $settings['shorthand_token'] = '111-1111111111111111';
 $settings['shorthand_input_format'] = 'full_unrestricted';
 `
 
-- **[ONLY V1]** Add your user ID to settings.php
-`
-$settings['shorthand_user_id'] = '11111';
-`
-
 - Create a new input format called "full_unrestricted" that supports HTML, or if
  you have already an input format
 allowing all HTML tags use its machine name as 

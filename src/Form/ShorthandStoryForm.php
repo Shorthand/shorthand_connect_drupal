@@ -9,7 +9,7 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Site\Settings;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -57,13 +57,6 @@ class ShorthandStoryForm extends ContentEntityForm {
   protected $logger;
 
   /**
-   * Drupal\Core\Site\Settings definition.
-   *
-   * @var \Drupal\Core\Site\Settings
-   */
-  protected $settings;
-
-  /**
    * Initializes an instance of the Shorthand story.
    *
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
@@ -78,16 +71,21 @@ class ShorthandStoryForm extends ContentEntityForm {
    *   The messenger interface.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger instance.
-   * @param \Drupal\Core\Site\Settings $settings
-   *   Settings service instance.
+   * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Config factory instance.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository, EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL, TimeInterface $time = NULL, AccountInterface $current_user, MessengerInterface $messenger, LoggerInterface $logger, Settings $settings) {
-    parent::__construct($entity_repository, $entity_type_bundle_info, $time);
+  public function __construct(EntityRepositoryInterface $entity_repository,
+    EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL,
+    TimeInterface $time = NULL,
+    AccountInterface $current_user,
+    MessengerInterface $messenger,
+    LoggerInterface $logger,
+    ConfigFactoryInterface $config_factory) {
+    parent::__construct($entity_repository, $entity_type_bundle_info, $time, $config_factory);
     $this->currentUser = $current_user;
     $this->time = $time;
     $this->messenger = $messenger;
     $this->logger = $logger;
-    $this->settings = $settings;
   }
 
   /**
@@ -101,7 +99,7 @@ class ShorthandStoryForm extends ContentEntityForm {
       $container->get('current_user'),
       $container->get('messenger'),
       $container->get('logger.channel.shorthand'),
-      $container->get('settings')
+      $container->get('config.factory')
     );
   }
 
@@ -123,7 +121,9 @@ class ShorthandStoryForm extends ContentEntityForm {
 
     // Check formats.
     $formats = array_keys(filter_formats());
-    $input_format = $this->settings->get('shorthand_input_format', filter_default_format());
+    $config = $this->config('shorthand.settings');
+    $input_format = $config->get('input_format', filter_default_format());
+
     $format_fail = !in_array($input_format, $formats);
     $load_fail = ($form['shorthand_id']['widget'][0]['value']['#options'] == [0 => "Cannot retrieve stories"]);
 

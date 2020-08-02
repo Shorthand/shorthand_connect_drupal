@@ -7,7 +7,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Client;
-use Drupal\Core\Site\Settings;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\Exception\BadResponseException;
 use Psr\Log\LoggerInterface;
 
@@ -31,11 +31,11 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   protected $httpClient;
 
   /**
-   * Drupal\Core\Site\Settings definition.
+   * Drupal\Core\Config\ConfigFactoryInterface definition.
    *
-   * @var \Drupal\Core\Site\Settings
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $settings;
+  protected $config;
 
   /**
    * The file system service.
@@ -63,18 +63,18 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *
    * @param \GuzzleHttp\Client $http_client
    *   Http client service instance.
-   * @param \Drupal\Core\Site\Settings $settings
-   *   Settings service instance.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger interface.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger instance.
+   * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Config factory instance.
    */
-  public function __construct(Client $http_client, Settings $settings, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger) {
+  public function __construct(Client $http_client, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger, ConfigFactoryInterface $config_factory) {
+    $this->config = $config_factory;
     $this->httpClient = $http_client;
-    $this->settings = $settings;
     $this->fileSystem = $file_system;
     $this->messenger = $messenger;
     $this->logger = $logger;
@@ -153,14 +153,37 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function validateApiKey($token) {
+    try {
+      $this->httpClient->get('v2/token-info/', [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders($token),
+        'timeout' => 120,
+      ]);
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($message);
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  /**
    * Build request headers, including authentication parameters.
    *
    * @return array
    *   Headers parameters array.
    */
-  protected function buildHeaders() {
+  protected function buildHeaders($token = NULL) {
+    $config = $this->config->getEditable('shorthand.settings');
+    $config_token = $config->get('token');
     return [
-      'Authorization' => ' Token ' . $this->settings->get('shorthand_token'),
+      'Authorization' => ' Token ' . ($token ?? $config_token),
     ];
   }
 
@@ -171,7 +194,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   Shorthand API base url.
    */
   protected function getBaseUri() {
-    return $this->settings->get('shorthand_server_url', self::SHORTHAND_API_URL);
+    return self::SHORTHAND_API_URL;
   }
 
   /**

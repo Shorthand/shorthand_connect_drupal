@@ -34,4 +34,12 @@ interface ShorthandApiInterface {
    */
   public function getStory($id);
 
+  /**
+   * Validate API key.
+   *
+   * @return bool
+   *   TRUE if API key is valid.
+   */
+  public function validateApiKey($token);
+
 }

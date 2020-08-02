@@ -6,3 +6,4 @@ package: Other
 
 dependencies:
   - drupal:text
+configure: shorthand.admin_settings_form

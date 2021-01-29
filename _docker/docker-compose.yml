@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 services:
   mysql:
     image: mysql:5.7
@@ -11,6 +11,8 @@ services:
       - MYSQL_DATABASE=mysqldb
       - MYSQL_ROOT_PASSWORD=rootp
     restart: always
+    ports:
+      - "3307:3306"
   web:
     image: drupal:7
     environment:

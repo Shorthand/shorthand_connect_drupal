@@ -26,6 +26,12 @@
   <div class="content clearfix"<?php print $content_attributes; ?>>
 
       <?php if(!empty($story_id)): ?>
+        <?php
+        $story_body = preg_replace('/<link.*rel="amphtml"(.[^>]*>)\n/', '', $story_body);
+        $story_body = preg_replace('/<meta property="og:[a-z]+" content=".*">\n/', '', $story_body);
+        $story_body = preg_replace('/<meta name="twitter:[a-z]+" content=".*">\n/', '', $story_body);
+        ?>
+        
         <?php print $story_body; ?>
         <?php print $story_extra_html; ?>
       <?php endif; ?>

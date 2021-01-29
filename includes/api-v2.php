@@ -20,7 +20,10 @@ function sh_is_token_valid($token) {
     $url = $serverURL . '/v2/token-info';
     $response = drupal_http_request($url, [
       'method' => 'GET',
-      'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+      'headers' => [
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => 'Token ' . $token,
+      ],
     ]);
     return $response->code == '200';
   }
@@ -46,7 +49,10 @@ function sh_get_stories() {
     $url = $serverURL . '/v2/stories/';
     $response = drupal_http_request($url, [
       'method' => 'GET',
-      'headers' => ['Content-Type' => 'application/x-www-form-urlencoded', 'Authorization' => 'Token ' . $token],
+      'headers' => [
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => 'Token ' . $token,
+      ],
     ]);
     if (isset($response->data)) {
       $data = json_decode($response->data);
@@ -61,11 +67,21 @@ function sh_get_stories() {
           if (isset($storydata->description)) {
             $description = $storydata->description;
           }
+          $authors = '';
+          if (isset($storydata->authors)) {
+            $authors = $storydata->authors;
+          }
+          $keywords = '';
+          if (isset($storydata->keywords)) {
+            $keywords = $storydata->keywords;
+          }
           $story = [
             'image' => $storydata->cover,
             'id' => $storydata->id,
             'metadata' => (object) [
               'description' => $description,
+              'authors' => $authors,
+              'keywords' => $keywords,
             ],
             'title' => $storydata->title,
           ];

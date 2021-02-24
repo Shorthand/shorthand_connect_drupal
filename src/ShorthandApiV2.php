@@ -12,7 +12,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use Psr\Log\LoggerInterface;
 
 /**
- * Class ShorthandApiV2.
+ * Class for Shorthand's API handling (Versioning to be deprecated).
  */
 class ShorthandApiV2 implements ShorthandApiInterface {
 
@@ -84,7 +84,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * {@inheritdoc}
    */
   public function getProfile() {
-    // TODO: Implement getProfile() method.
+    // @todo Implement getProfile() method.
   }
 
   /**
@@ -109,8 +109,11 @@ class ShorthandApiV2 implements ShorthandApiInterface {
             'id' => $storydata['id'],
             'metadata' => [
               'description' => $storydata['description'],
+              'authors' => '' . $storydata['authors'],
+              'keywords' => '' . $storydata['keywords'],
             ],
             'title' => $storydata['title'],
+            'external_url' => '' . $storydata['url'],
             'story_version' => '' . $storydata['version'],
           ];
           $stories[] = $story;

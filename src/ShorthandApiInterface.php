@@ -3,7 +3,7 @@
 namespace Drupal\shorthand;
 
 /**
- * Interface ShorthandApiInterface.
+ * Interface for Shorthand API.
  */
 interface ShorthandApiInterface {
 

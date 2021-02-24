@@ -107,8 +107,9 @@ class ShorthandStoryForm extends ContentEntityForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    /* @var $entity \Drupal\shorthand\Entity\ShorthandStory */
+    /** @var \Drupal\shorthand\Entity\ShorthandStory $entity */
     $form = parent::buildForm($form, $form_state);
+    $form['#attached']['library'][] = 'shorthand/shorthandForm';
 
     if (!$this->entity->isNew()) {
       $form['new_revision'] = [

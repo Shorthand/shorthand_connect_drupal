@@ -131,7 +131,13 @@ class ShorthandStoryRevisionRevertForm extends ConfirmFormBase {
     $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
     $this->revision->save();
 
-    $this->logger('content')->notice('Shorthand story: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
+    $this->logger('content')->notice(
+      'Shorthand story: reverted %title revision %revision.',
+      [
+        '%title' => $this->revision->label(),
+        '%revision' => $this->revision->getRevisionId(),
+      ]
+    );
     $this->messenger()->addStatus($this->t('Shorthand story %title has been reverted to the revision from %revision-date.', [
       '%title' => $this->revision->label(),
       '%revision-date' => $this->dateFormatter->format($original_revision_timestamp),

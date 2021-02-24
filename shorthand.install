@@ -6,16 +6,7 @@
  */
 
 use Drupal\shorthand\Entity\ShorthandStory;
-
-/**
- * Implements hook_install().
- */
-function shorthand_install() {
-  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
-  $config
-    ->set('version', '2')
-    ->save();
-}
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Implements hook_uninstall().
@@ -34,16 +25,135 @@ function shorthand_uninstall() {
  */
 function shorthand_8001(&$sandbox) {
   $settings = \Drupal::service('settings');
-  if ($settings->get('shorthand_version') == '2') {
-    $config = \Drupal::configFactory()->getEditable('shorthand.settings');
-    $config
-      ->set('token', $settings->get('shorthand_token'))
-      ->set('version', $settings->get('shorthand_version'))
-      ->set('input_format', $settings->get('shorthand_input_format'))
-      ->save();
-    return t('Shorthand settings have been migrated from settings.php.');
-  }
-  else {
-    return t('Please update Shorthand settings.');
-  }
+  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+  $config
+    ->set('token', $settings->get('shorthand_token'))
+    ->set('version', '2')
+    ->set('input_format', $settings->get('shorthand_input_format'))
+    ->save();
+  return t('Shorthand settings have been migrated from settings.php.');
+}
+
+/**
+ * Remove Version Dependancy and add extra fields.
+ */
+function shorthand_update_8002(&$sandbox) {
+  Drupal::configFactory()
+    ->getEditable('shorthand.settings')
+    ->clear("version")
+    ->save();
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $last_installed_schema_repository = \Drupal::service('entity.last_installed_schema.repository');
+  $entity_type = $definition_update_manager->getEntityType('shorthand_story');
+  $fields = $last_installed_schema_repository->getLastInstalledFieldStorageDefinitions('shorthand_story');
+
+  $fields['thumbnail'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Thumbnail'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $fields['authors'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Authors'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $fields['keywords'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Keywords'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $fields['description'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Description'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 4,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $fields['external_url'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Externally Published URL'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 4,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->updateFieldableEntityType($entity_type, $fields, $sandbox);
+
+  return t('Shorthand settings updated.');
 }

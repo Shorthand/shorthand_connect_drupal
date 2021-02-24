@@ -36,6 +36,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
   public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
     $this->shorthandApi = $shorthandApi;
+    $this->shorthandStories = $this->shorthandApi->getStories();
   }
 
   /**
@@ -60,6 +61,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
       '#type' => 'select',
       '#default_value' => isset($items[$delta]->value) ? $items[$delta]->value : NULL,
       '#options' => $this->buildStoriesList(),
+      '#suffix' => '<div id="shorthand-stories-data">' . json_encode($this->shorthandStories) . '</div>',
     ];
 
     return $element;
@@ -72,7 +74,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    *   Array of Shorthand stories, keyed by Story ID.
    */
   protected function buildStoriesList() {
-    if (($stories = $this->shorthandApi->getStories()) !== FALSE) {
+    if (($stories = $this->shorthandStories) !== FALSE) {
       $list = [];
       foreach ($stories as $story) {
         $list[$story['id']] = $story['title'];

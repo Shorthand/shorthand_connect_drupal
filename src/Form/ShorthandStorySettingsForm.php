@@ -80,17 +80,6 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('shorthand.settings');
 
-    $form['shorthand_version'] = [
-      '#default_value' => $config->get('version'),
-      '#description' => $this->t('Shorthand API version'),
-      '#maxlength' => 1,
-      '#required' => TRUE,
-      '#size' => 20,
-      '#title' => $this->t('API version'),
-      '#disabled' => 'disabled',
-      '#type' => 'textfield',
-    ];
-
     $form['shorthand_token'] = [
       '#default_value' => $config->get('token'),
       '#description' => $this->t('Read how to obtain Shorthand API token <a href=":url" title="Shorthand api documentation">here</a>', [':url' => 'https://support.shorthand.com/en/articles/62-programmatic-publishing-with-the-shorthand-api']),
@@ -136,7 +125,6 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
     $config = $this->config('shorthand.settings');
     $config
       ->set('token', $form_state->getValue('shorthand_token'))
-      ->set('version', $form_state->getValue('shorthand_version'))
       ->set('input_format', $form_state->getValue('shorthand_input_format'))
       ->save();
 

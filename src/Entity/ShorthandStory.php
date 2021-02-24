@@ -95,15 +95,17 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    */
   public function preSave(EntityStorageInterface $storage) {
 
-    $version = $this->getShorthandApiVersion();
     $apiservice = 'shorthand.api.v2';
     $head_file = '/head.html';
     $body_file = '/article.html';
 
     // Download and extract Story .zip file.
-    // @todo: Allow user an ability to resync the story.
+    // @todo Allow user an ability to resync the story.
     $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId());
-    $input_format = \Drupal::service('settings')->get('shorthand_input_format', filter_default_format());
+    $input_format = \Drupal::configFactory()->getEditable('shorthand.settings')->get('input_format');
+    if (empty($input_format)) {
+      $input_format = filter_default_format();
+    }
 
     /** @var \Drupal\Core\Archiver\ArchiverInterface $archiver */
     $file_system = \Drupal::service('file_system');
@@ -122,7 +124,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       "HTML-ENTITIES",
       "UTF-8"
     );
-    $this->head->value = $this->fixStoryContentPaths($head, $version);
+    $this->head->value = $this->fixStoryContentPaths($head);
     $this->head->format = $input_format;
 
     $body = mb_convert_encoding(
@@ -130,7 +132,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       "HTML-ENTITIES",
       "UTF-8"
     );
-    $this->body->value = $this->fixStoryContentPaths($body, $version);
+    $this->body->value = $this->fixStoryContentPaths($body);
     $this->body->format = $input_format;
 
     // Let parent preSave() run so other modules can alter the content before
@@ -365,6 +367,12 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE);
 
+    $fields['thumbnail'] = createStringField(t('Thumbnail'), t('The thumbnail url of the Shorthand story entity.'));
+    $fields['authors'] = createStringField(t('Authors'), t('The Authors of the Shorthand story entity.'));
+    $fields['keywords'] = createStringField(t('Keywords'), t('The keywords of the Shorthand story entity.'));
+    $fields['description'] = createStringField(t('Description'), t('The description/subtitle of the Shorthand story entity.'));
+    $fields['external_url'] = createStringField(t('Externally Published URL'), t('The external published URL of the Shorthand story entity.'));
+
     return $fields;
   }
 
@@ -404,22 +412,53 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *
    * @param string $content
    *   Shorthand Story's HTML markup to be processed.
-   * @param string $version
-   *   Shorthand API Version, defsault is 2.
    *
    * @return string
    *   Content processed with all path relative to Drupal's Shorthand story
    *   storage path.
    */
-  protected function fixStoryContentPaths($content, $version = '2') {
+  protected function fixStoryContentPaths($content) {
     $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
-    if ($version == '2') {
-      $content = str_replace('./assets/', $assets_path . '/assets/', $content);
-      $content = str_replace('./static/', $assets_path . '/static/', $content);
-      $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
-    }
+
+    $content = str_replace('./assets/', $assets_path . '/assets/', $content);
+    $content = str_replace('./static/', $assets_path . '/static/', $content);
+    $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
 
     return $content;
+  }
+
+  /**
+   * Defines constant generic settings for a string field.
+   *
+   * @param string $label
+   *   Plain text used to label the field.
+   * @param string $description
+   *   Plain text used to describe the field in slightly more detail.
+   *
+   * @return object
+   *   BaseFieldDefinition of simple string field
+   */
+  protected function createStringField($label, $description) {
+    return BaseFieldDefinition::create('string')
+      ->setLabel($label)
+      ->setDescription($description)
+      ->setRevisionable(TRUE)
+      ->setSettings([
+        'max_length' => 255,
+        'text_processing' => 0,
+      ])
+      ->setDefaultValue('')
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => -4,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
   }
 
 }

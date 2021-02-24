@@ -26,7 +26,7 @@ class ShorthandStoryListBuilder extends EntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    /* @var $entity \Drupal\shorthand\Entity\ShorthandStory */
+    /** @var \Drupal\shorthand\Entity\ShorthandStory $entity */
     $row['id'] = $entity->id();
     $row['name'] = Link::createFromRoute(
       $entity->label(),

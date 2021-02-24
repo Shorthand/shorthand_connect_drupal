@@ -99,7 +99,13 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
     $shorthand_story = $this->entityTypeManager
       ->getStorage('shorthand_story')
       ->loadRevision($shorthand_story_revision);
-    return $this->t('Revision of %title from %date', ['%title' => $shorthand_story->label(), '%date' => $this->dateFormatter->format($shorthand_story->getRevisionCreationTime())]);
+    return $this->t(
+      'Revision of %title from %date',
+      [
+        '%title' => $shorthand_story->label(),
+        '%date' => $this->dateFormatter->format($shorthand_story->getRevisionCreationTime()),
+      ]
+    );
   }
 
   /**
@@ -119,7 +125,15 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
     $has_translations = (count($languages) > 1);
     $shorthand_story_storage = $this->entityTypeManager->getStorage('shorthand_story');
 
-    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $shorthand_story->label()]) : $this->t('Revisions for %title', ['%title' => $shorthand_story->label()]);
+    $build['#title'] = $has_translations ? $this->t(
+      '@langname revisions for %title',
+      [
+        '@langname' => $langname,
+        '%title' => $shorthand_story->label(),
+      ]
+    ) : $this->t('Revisions for %title',
+    ['%title' => $shorthand_story->label()]);
+
     $header = [$this->t('Revision'), $this->t('Operations')];
 
     $revert_permission = (($account->hasPermission("revert all shorthand story revisions") || $account->hasPermission('administer shorthand story entities')));
@@ -150,7 +164,10 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
             '#context' => [
               'date' => $date,
               'username' => $this->renderer->renderPlain($username),
-              'message' => ['#markup' => $revision->getRevisionLogMessage(), '#allowed_tags' => Xss::getHtmlTagList()],
+              'message' => [
+                '#markup' => $revision->getRevisionLogMessage(),
+                '#allowed_tags' => Xss::getHtmlTagList(),
+              ],
             ],
           ],
         ];
@@ -181,14 +198,26 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
                 'langcode' => $langcode,
               ]
               ) :
-              Url::fromRoute('entity.shorthand_story.revision_revert', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]),
+              Url::fromRoute(
+                'entity.shorthand_story.revision_revert',
+                [
+                  'shorthand_story' => $shorthand_story->id(),
+                  'shorthand_story_revision' => $vid,
+                ]
+              ),
             ];
           }
 
           if ($delete_permission) {
             $links['delete'] = [
               'title' => $this->t('Delete'),
-              'url' => Url::fromRoute('entity.shorthand_story.revision_delete', ['shorthand_story' => $shorthand_story->id(), 'shorthand_story_revision' => $vid]),
+              'url' => Url::fromRoute(
+                'entity.shorthand_story.revision_delete',
+                [
+                  'shorthand_story' => $shorthand_story->id(),
+                  'shorthand_story_revision' => $vid,
+                ]
+              ),
             ];
           }
 

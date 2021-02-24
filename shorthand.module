@@ -34,7 +34,7 @@ function shorthand_preprocess_html(&$variables) {
     ($story instanceof ShorthandStoryInterface)
   ) {
     $files_url = file_create_url($story->getShorthandStoryFilesStorageUri());
-    $node_url = $story->toUrl()->setAbsolute()->toString();;
+    $node_url = $story->toUrl()->setAbsolute()->toString();
     $html_head = $story->get('head')->value;
     if (strpos($html_head, 'amphtml') !== FALSE) {
       // Replace AMP url if present.

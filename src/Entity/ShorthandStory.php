@@ -367,11 +367,12 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE);
 
-    $fields['thumbnail'] = createStringField(t('Thumbnail'), t('The thumbnail url of the Shorthand story entity.'));
-    $fields['authors'] = createStringField(t('Authors'), t('The Authors of the Shorthand story entity.'));
-    $fields['keywords'] = createStringField(t('Keywords'), t('The keywords of the Shorthand story entity.'));
-    $fields['description'] = createStringField(t('Description'), t('The description/subtitle of the Shorthand story entity.'));
-    $fields['external_url'] = createStringField(t('Externally Published URL'), t('The external published URL of the Shorthand story entity.'));
+    // $story = new ShorthandStory();
+    $fields['thumbnail'] = ShorthandStory::createStringField(t('Thumbnail'), t('The thumbnail url of the Shorthand story entity.'));
+    $fields['authors'] = ShorthandStory::createStringField(t('Authors'), t('The Authors of the Shorthand story entity.'));
+    $fields['keywords'] = ShorthandStory::createStringField(t('Keywords'), t('The keywords of the Shorthand story entity.'));
+    $fields['description'] = ShorthandStory::createStringField(t('Description'), t('The description/subtitle of the Shorthand story entity.'));
+    $fields['external_url'] = ShorthandStory::createStringField(t('Externally Published URL'), t('The external published URL of the Shorthand story entity.'));
 
     return $fields;
   }
@@ -438,7 +439,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    * @return object
    *   BaseFieldDefinition of simple string field
    */
-  protected function createStringField($label, $description) {
+  private static function createStringField($label, $description) {
     return BaseFieldDefinition::create('string')
       ->setLabel($label)
       ->setDescription($description)

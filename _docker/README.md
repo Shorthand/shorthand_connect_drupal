@@ -1,6 +1,11 @@
 Drupal 8 docker
 
 ```
+# If you intend to develop with a local dylan setup - copy the certificates.
+cp -a ../dylan/ops/ci/nginx/certificates/. ./_docker/certificates/
+```
+
+```
 # Start environment (from root directory).
 docker-compose --file _docker/docker-compose.yml up --detach --build
 ```
@@ -21,6 +26,25 @@ To edit settings run `vi sites/default/settings.php` inside the container.
 
 # To clear cache.
 docker-compose --file _docker/docker-compose.yml exec web ./vendor/bin/drush -l default cache:rebuild
+```
+
+To setup local dylan api interop
+
+```
+#create bridge network
+docker network create drupalDevNetwork
+
+#connect dylan_dev
+docker network connect drupalDevNetwork dylan_dev
+
+#connect web (drupal)
+docker network connect drupalDevNetwork web
+
+#inspect network to see ip address of dylan_dev (in the below command we've assumed 172.18.0.2)
+docker network inspect drupalDevNetwork
+
+#set api.dylan.local in /etc/hosts of drupal container (change 172.18.0.2 if the above ip address shows differently)
+docker-compose --file _docker/docker-compose.yml exec web bash -c "echo '172.18.0.2   api.dylan.local' >> /etc/hosts"
 ```
 
 To run `phpcs` code linting

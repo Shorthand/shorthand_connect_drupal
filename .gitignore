@@ -1,2 +1,4 @@
 
 shorthand_connect/config.php
+_docker/certificates/*
+!_docker/certificates/README.md

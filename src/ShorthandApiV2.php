@@ -21,7 +21,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   /**
    * Shorthand API URL.
    */
-  const SHORTHAND_API_URL = 'https://api.shorthand.com/';
+  const SHORTHAND_API_URL = 'https://api.dylan.local/';
 
   /**
    * GuzzleHttp\Client definition.
@@ -160,6 +160,8 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   public function validateApiKey($token) {
     try {
+      error_log('TESTING THIS');
+      error_log($this->getBaseUri());
       $this->httpClient->get('v2/token-info/', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders($token),

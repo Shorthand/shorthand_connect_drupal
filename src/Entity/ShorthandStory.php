@@ -101,7 +101,13 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
     // Download and extract Story .zip file.
     // @todo Allow user an ability to resync the story.
-    $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId());
+    $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId(), ( $this->getExternalAssetsFlag() ? array('without_assets'=>true) : []));
+
+    //Publish the external assets to the selected publish configuration
+    if($this->getExternalAssetsFlag()){
+      //Publish external assets
+      \Drupal::service($apiservice)->publishAssets($this->getShorthandStoryId(), $this->getExternalPublishingConfiguration());
+    }
     $input_format = \Drupal::configFactory()->getEditable('shorthand.settings')->get('input_format');
     if (empty($input_format)) {
       $input_format = filter_default_format();
@@ -124,7 +130,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       "HTML-ENTITIES",
       "UTF-8"
     );
-    $this->head->value = $this->fixStoryContentPaths($head);
+
+    $this->head->value = $this->fixStoryContentPaths($head, $this->getExternalAssetsFlag());
     $this->head->format = $input_format;
 
     $body = mb_convert_encoding(
@@ -132,7 +139,9 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       "HTML-ENTITIES",
       "UTF-8"
     );
-    $this->body->value = $this->fixStoryContentPaths($body);
+
+    //Split based on external assets flag
+    $this->body->value = $this->fixStoryContentPaths($body, $this->getExternalAssetsFlag());
     $this->body->format = $input_format;
 
     // Let parent preSave() run so other modules can alter the content before
@@ -160,6 +169,20 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    */
   public function getShorthandStoryId() {
     return $this->get('shorthand_id')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getExternalAssetsFlag() {
+    return $this->get('external_assets')->value == 1;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getExternalPublishingConfiguration() {
+    return json_decode($this->get('external_publishing_config')->value);
   }
 
   /**
@@ -365,8 +388,41 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       ->setDescription(t('Indicates if the last edit of a translation belongs to current revision.'))
       ->setReadOnly(TRUE)
       ->setRevisionable(TRUE)
-      ->setTranslatable(TRUE);
+      ->setDefaultValue(FALSE);
 
+    $fields['external_assets'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Use externally hosted assets.'))
+      ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
+      ->setDisplayOptions('view', [
+        'settings' => [
+          'format' => 'unicode-yes-no',
+        ],
+        'weight' => 1,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 1,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+    
+    $fields['external_publishing_config'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Publishing Configuration ID'))
+      ->setDescription(t('Shorthand Publishing Configuration ID.'))
+      ->setRevisionable(FALSE)
+      ->setTranslatable(TRUE)
+      ->setDisplayOptions('view', [
+        'region' => 'hidden',
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'shorthand_publish_configuration_select',
+        'weight' => 1,
+      ])
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE);
+    
     // $story = new ShorthandStory();
     $fields['thumbnail'] = ShorthandStory::createStringField(t('Thumbnail'), t('The thumbnail url of the Shorthand story entity.'));
     $fields['authors'] = ShorthandStory::createStringField(t('Authors'), t('The Authors of the Shorthand story entity.'));
@@ -418,10 +474,15 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *   Content processed with all path relative to Drupal's Shorthand story
    *   storage path.
    */
-  protected function fixStoryContentPaths($content) {
+  protected function fixStoryContentPaths($content, $external_assets) {
     $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
-
-    $content = str_replace('./assets/', $assets_path . '/assets/', $content);
+    if(!$external_assets){
+      $content = str_replace('./assets/', $assets_path . '/assets/', $content);
+    }else{
+      $base_url = $this->getExternalPublishingConfiguration()->baseUrl;
+      $base_url = $base_url !== "/"? $base_url : 'https://'.$this->getExternalPublishingConfiguration()->name.$base_url;
+      $content = str_replace('./assets/', $base_url . 'assets/', $content);
+    }
     $content = str_replace('./static/', $assets_path . '/static/', $content);
     $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
 

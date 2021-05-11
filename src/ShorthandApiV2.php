@@ -21,7 +21,8 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   /**
    * Shorthand API URL.
    */
-  const SHORTHAND_API_URL = 'https://api.dylan.local/';
+  const SHORTHAND_API_URL = 'https://api.shorthand.com/';
+
 
   /**
    * GuzzleHttp\Client definition.
@@ -87,6 +88,45 @@ class ShorthandApiV2 implements ShorthandApiInterface {
     // @todo Implement getProfile() method.
   }
 
+    /**
+   * {@inheritdoc}
+   */
+  public function getPublishingConfigurations() {
+
+    $configs = [];
+
+    try {
+      $response = $this->httpClient->get('v2/publish-configurations', [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders(),
+      ]);
+
+      $decoded = Json::decode((string) $response->getBody());
+
+      if (isset($decoded)) {
+        foreach ($decoded as $configdata) {
+          $config = [
+            'name' => $configdata['name'],
+            'id' => $configdata['id'],
+            'description' => $configdata['description'],
+            'baseUrl' => $configdata['baseUrl'],
+          ];
+          $configs[] = $config;
+        }
+      }
+
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', ['@message' => $message]));
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+      return FALSE;
+    }
+
+    return $configs;
+
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -135,11 +175,11 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   /**
    * {@inheritdoc}
    */
-  public function getStory($id) {
+  public function getStory($id, $params) {
 
     try {
       $temp_path = $this->getStoryFileTempPath();
-      $this->httpClient->get('v2/stories/' . $id, [
+      $this->httpClient->get('v2/stories/' . $id . (isset($params)? '?'.http_build_query($params) : '') , [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'sink' => $temp_path,
@@ -154,6 +194,31 @@ class ShorthandApiV2 implements ShorthandApiInterface {
 
     return $temp_path;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function publishAssets($id, $config) {
+
+    try {
+      $req = $this->httpClient->post('v2/stories/' . $id . '/publish' , [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders(),
+        'body' => json_encode($this->buildBody($config->id)),
+        'timeout' => 120,
+      ]);
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($message);
+      $this->messenger->addError($req);
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+    }
+
+    return $temp_path;
+  }
+
+
 
   /**
    * {@inheritdoc}
@@ -189,6 +254,22 @@ class ShorthandApiV2 implements ShorthandApiInterface {
     $config_token = $config->get('token');
     return [
       'Authorization' => ' Token ' . ($token ?? $config_token),
+      'Content-Type' => 'application/json; charset=utf-8',
+    ];
+  }
+
+  /**
+   * Build request body for external publishing
+   *
+   * @return array
+   *   Body array
+   */
+
+  protected function buildBody($config) {
+    return [
+      'config' => $config,
+      'url' => '',
+      "publishSubset" =>"assets_only"
     ];
   }
 

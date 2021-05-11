@@ -37,18 +37,15 @@ function shorthand_8001(&$sandbox) {
 /**
  * Remove Version Dependancy and add extra fields.
  */
-function shorthand_update_8002(&$sandbox) {
-  Drupal::configFactory()
+function shorthand_update_8002() {
+  \Drupal::configFactory()
     ->getEditable('shorthand.settings')
     ->clear("version")
     ->save();
 
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
-  $last_installed_schema_repository = \Drupal::service('entity.last_installed_schema.repository');
-  $entity_type = $definition_update_manager->getEntityType('shorthand_story');
-  $fields = $last_installed_schema_repository->getLastInstalledFieldStorageDefinitions('shorthand_story');
 
-  $fields['thumbnail'] = BaseFieldDefinition::create('string')
+  $thumbnail = BaseFieldDefinition::create('string')
     ->setLabel(t('Thumbnail'))
     ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
@@ -69,7 +66,9 @@ function shorthand_update_8002(&$sandbox) {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $fields['authors'] = BaseFieldDefinition::create('string')
+  $definition_update_manager->installFieldStorageDefinition('thumbnail', 'shorthand_story', 'shorthand', $thumbnail);
+
+  $authors = BaseFieldDefinition::create('string')
     ->setLabel(t('Authors'))
     ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
@@ -90,7 +89,9 @@ function shorthand_update_8002(&$sandbox) {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $fields['keywords'] = BaseFieldDefinition::create('string')
+  $definition_update_manager->installFieldStorageDefinition('authors', 'shorthand_story', 'shorthand', $authors);
+
+  $keywords = BaseFieldDefinition::create('string')
     ->setLabel(t('Keywords'))
     ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
@@ -111,7 +112,9 @@ function shorthand_update_8002(&$sandbox) {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $fields['description'] = BaseFieldDefinition::create('string')
+  $definition_update_manager->installFieldStorageDefinition('keywords', 'shorthand_story', 'shorthand', $keywords);
+
+  $description = BaseFieldDefinition::create('string')
     ->setLabel(t('Description'))
     ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
@@ -132,7 +135,9 @@ function shorthand_update_8002(&$sandbox) {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $fields['external_url'] = BaseFieldDefinition::create('string')
+  $definition_update_manager->installFieldStorageDefinition('description', 'shorthand_story', 'shorthand', $description);
+
+  $external_url = BaseFieldDefinition::create('string')
     ->setLabel(t('Externally Published URL'))
     ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
@@ -153,7 +158,59 @@ function shorthand_update_8002(&$sandbox) {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $definition_update_manager->updateFieldableEntityType($entity_type, $fields, $sandbox);
+  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_url);
 
   return t('Shorthand settings updated.');
+}
+
+
+/**
+ * Add field for external asset hosting - boolean
+ */
+function shorthand_update_8003() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $external_assets = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Use externally hosted assets.'))
+      ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
+      ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE)
+      ->setDisplayOptions('view', [
+        'settings' => [
+          'format' => 'unicode-yes-no',
+        ],
+        'weight' => 1,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 1,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_assets);
+
+  $external_publishing_config = BaseFieldDefinition::create('string')
+    ->setLabel(t('Publishing Configuration'))
+    ->setDescription(t('The publishing configuration to use for assets.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => 1,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 1,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('external_publishing_config', 'shorthand_story', 'shorthand', $external_publishing_config);
+
 }

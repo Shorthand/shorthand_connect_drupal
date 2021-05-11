@@ -17,6 +17,45 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!window.location.pathname.includes("/edit")) {
     populateFields(document.querySelector("[name*='shorthand_id']").value);
   }
+
+  // add change listener to external assets checkbox
+  let publishConfigDiv = document.querySelector(
+    "#edit-external-publishing-config-wrapper"
+  );
+
+  const actions = document.querySelector("#edit-actions");
+  const loader = document.createElement("div");
+  loader.classList.add("loader");
+  actions.prepend(loader);
+
+  if (!document.querySelector("[name*='external_assets']").checked) {
+    publishConfigDiv.classList.add("hide");
+  }
+  document
+    .querySelector("[name*='external_assets']")
+    .addEventListener("change", function (e) {
+      if (e.target.checked) {
+        publishConfigDiv.classList.remove("hide");
+      } else {
+        publishConfigDiv.classList.add("hide");
+      }
+    });
+  setTimeout(() => {
+    publishConfigDiv.classList.add("transition");
+  }, 10);
+  document
+    .querySelector("#edit-submit")
+    .addEventListener("click", function (e) {
+      const submit = document.querySelector("#edit-submit");
+      submit.value = "  Saving...";
+      loader.classList.add("show");
+
+      setTimeout(() => {
+        document.querySelectorAll("input, textarea").forEach(function (input) {
+          input.disabled = true;
+        });
+      });
+    });
 });
 
 function populateFields(id) {

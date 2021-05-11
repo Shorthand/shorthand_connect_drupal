@@ -35,7 +35,7 @@ To setup local dylan api interop
 docker network create drupalDevNetwork
 
 #connect dylan_dev
-docker network connect drupalDevNetwork dylan_dev
+docker network connect drupalDevNetwork dev_dylan
 
 #connect web (drupal)
 docker network connect drupalDevNetwork web
@@ -45,6 +45,9 @@ docker network inspect drupalDevNetwork
 
 #set api.dylan.local in /etc/hosts of drupal container (change 172.18.0.2 if the above ip address shows differently)
 docker-compose --file _docker/docker-compose.yml exec web bash -c "echo '172.18.0.2   api.dylan.local' >> /etc/hosts"
+
+#Ensure the correct api url is being used for local dev - in ShorthandApiv2.php:
+const SHORTHAND_API_URL = 'https://api.dylan.local/';
 ```
 
 To run `phpcs` code linting

@@ -11,7 +11,9 @@ jQuery(document).ready(function () {
     var existingID = jQuery(this).find("input[type=text]").val();
     var foundValidStory = existingID ? false : true;
     if (jQuery(this).find("ul.stories")) {
-      jQuery(this).append('<ul class="stories"></ul>');
+      jQuery(this).append(
+        '<div class="filter">Filter: <input type="search" id="storyFilter" placeholder="Example: The Shaving of Yak\'s"></input></div><ul class="stories"></ul>'
+      );
       var list = jQuery(this).find("ul.stories");
       jQuery(this).append('<div class="clear"></div>');
       for (var shStory in shStoryData["stories"]) {
@@ -48,9 +50,9 @@ jQuery(document).ready(function () {
             data.id +
             '" ' +
             selected +
-            ' /><img width="150" src="' +
+            ' /><div class="thumbnail" style="background-image:url(' +
             imageURL +
-            '" /><span>' +
+            ')"></div><span>' +
             data.title +
             archivedMessage +
             "</span><div id='data' style='display:none'>" +
@@ -100,4 +102,29 @@ jQuery(document).ready(function () {
       .find("input[name*='shorthand_story_authors']")
       .val(story.metadata.authors);
   });
+
+  var input = jQuery("#storyFilter");
+  input.on("keyup", function () {
+    filter(input.val());
+  });
+
+  var stories = jQuery(".stories .story");
+  function filter(search = "") {
+    search = search.toLowerCase();
+    if (search == "") {
+      //clear search
+      stories.removeClass("hidden");
+    } else {
+      //hide items
+      jQuery(stories).each(function () {
+        if (
+          jQuery(this).find("span").html().toLowerCase().indexOf(search) < 0
+        ) {
+          jQuery(this).addClass("hidden");
+        } else {
+          jQuery(this).removeClass("hidden");
+        }
+      });
+    }
+  }
 });

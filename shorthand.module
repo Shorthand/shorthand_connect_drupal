@@ -75,3 +75,15 @@ function shorthand_preprocess_html(&$variables) {
     ];
   }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function shorthand_theme() {
+  return [
+    'shorthand_story' => [
+      'render element' => 'elements',
+      'file' => 'shorthand.page.inc',
+    ],
+  ];
+}

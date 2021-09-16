@@ -5,3 +5,10 @@ shorthand.admin_settings_form:
     _title: 'Shorthand Settings'
   requirements:
     _permission: 'administer shorthand story entities'
+entity.shorthand_story.collection:
+  path: '/admin/content/shorthand-story'
+  defaults:
+    _entity_list: 'shorthand_story'
+    _title: 'Shorthand Stories'
+  requirements:
+    _permission: 'access shorthand story overview'

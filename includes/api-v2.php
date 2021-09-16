@@ -76,7 +76,7 @@ function sh_get_stories() {
             $keywords = $storydata->keywords;
           }
           $story = [
-            'image' => $storydata->cover,
+            'image' => $storydata->signedCover,
             'id' => $storydata->id,
             'metadata' => (object) [
               'description' => $description,
@@ -107,7 +107,7 @@ function sh_get_stories() {
  * @return array
  *   Array of story data.
  */
-function sh_copy_story($node_id, $story_id) {
+function sh_copy_story($node_id, $story_id, $node) {
   $destination = variable_get('file_directory_path', conf_path() . '/files');
   $destination_path = $destination . '/shorthand/' . $node_id . '/' . $story_id;
   $destination_url = file_create_url('public://') . 'shorthand/' . $node_id . '/' . $story_id;
@@ -138,6 +138,13 @@ function sh_copy_story($node_id, $story_id) {
         shorthand_archive_extract($zipfile, $destination_path, TRUE);
         $story['path'] = $destination_path;
         $story['url'] = $destination_url;
+
+        $thumb = $node->shorthand_story_thumbnail[LANGUAGE_NONE][0]['value'];
+        if(empty($thumb) || strpos($thumb, '{Shorthand Local}/') !== false){
+          $thumb = str_replace('{Shorthand Local}/', $destination_url.'/assets/', $thumb);
+          $node->shorthand_story_thumbnail[LANGUAGE_NONE][0]['value'] = $thumb;
+        }
+        
       }
       catch (Exception $e) {
         $story['error'] = [

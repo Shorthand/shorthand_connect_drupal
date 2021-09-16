@@ -91,7 +91,9 @@ jQuery(document).ready(function () {
     var form = jQuery("#shorthand-story-node-form");
 
     form.find("input[name='title']").val(story.title);
-    form.find("input[name*='shorthand_story_thumbnail']").val(story.image);
+    form
+      .find("input[name*='shorthand_story_thumbnail']")
+      .val(getFilePath(story.image));
     form
       .find("input[name*='shorthand_story_description']")
       .val(story.metadata.description);
@@ -126,5 +128,10 @@ jQuery(document).ready(function () {
         }
       });
     }
+  }
+
+  function getFilePath(url) {
+    let filename = url.match(/(?<=organisations\/..........\/)(.*)(?=\?)/);
+    return "{Shorthand Local}/" + filename[0];
   }
 });

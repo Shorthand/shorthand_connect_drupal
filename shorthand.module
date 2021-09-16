@@ -138,7 +138,7 @@ function update_node_data($node) {
   if (isset($node->shorthand_story_id)) {
     $node->original = isset($node->original) ? $node->original : NULL;
 
-    $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
+    $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value'], $node);
 
     if (isset($story['error']) && isset($story['error']['pretty'])) {
       print_r($story['error']['pretty']);

@@ -145,7 +145,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
       if (isset($decoded)) {
         foreach ($decoded as $storydata) {
           $story = [
-            'image' => $storydata['cover'],
+            'image' => $storydata['signedCover'],
             'id' => $storydata['id'],
             'metadata' => [
               'description' => $storydata['description'],
@@ -183,7 +183,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'sink' => $temp_path,
-        'timeout' => 120,
+        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -205,7 +205,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'body' => json_encode($this->buildBody($config->id)),
-        'timeout' => 120,
+        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -230,7 +230,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
       $this->httpClient->get('v2/token-info/', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders($token),
-        'timeout' => 120,
+        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {

@@ -162,6 +162,16 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     if (!$this->getRevisionUser()) {
       $this->setRevisionUserId($this->getOwnerId());
     }
+
+    // If locally referencing the Shorthand Thumbnail - replace the {Shorthand Local} 
+    // tag with the new local path
+    $thumb = $this->thumbnail->value;
+    if(empty($thumb) || strpos($thumb, '{Shorthand Local}/') !== false){
+      $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
+      $thumb = str_replace('{Shorthand Local}/', $assets_path.'/assets/', $thumb);
+      $this->thumbnail->value = $thumb;
+    }
+
   }
 
   /**

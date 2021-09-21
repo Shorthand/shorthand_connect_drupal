@@ -90,6 +90,15 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
     ];
 
+    $form['shorthand_request_timeout'] = [
+      '#default_value' => $config->get('request_timeout') ?? 120,
+      '#description' => $this->t('Number of seconds to wait before the \GuzzleHttp\Client request timeouts. Use 0 to wait indefinitely.'),
+      '#required' => TRUE,
+      '#min' => 0,
+      '#title' => $this->t('Request timeout'),
+      '#type' => 'number',
+    ];
+
     $text_format_options = [];
     foreach (filter_formats() as $key => $filter) {
       $text_format_options[$key] = $filter->label();
@@ -125,6 +134,7 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
     $config = $this->config('shorthand.settings');
     $config
       ->set('token', $form_state->getValue('shorthand_token'))
+      ->set('request_timeout', $form_state->getValue('shorthand_request_timeout'))
       ->set('input_format', $form_state->getValue('shorthand_input_format'))
       ->save();
 

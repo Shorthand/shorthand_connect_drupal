@@ -63,12 +63,21 @@ function populateFields(id) {
     return;
   }
   const story = stories.find((s) => s.id === id);
-  const form = document.querySelector("#shorthand-story-add-form");
+  const form =
+    document.querySelector("#shorthand-story-add-form") ||
+    document.querySelector("#shorthand-story-edit-form");
   form.querySelector("input[name*='name']").value = story.title;
-  form.querySelector("input[name*='thumbnail']").value = story.image;
+  form.querySelector("input[name*='thumbnail']").value = getFilePath(
+    story.image
+  );
   form.querySelector("input[name*='authors']").value = story.metadata.authors;
   form.querySelector("input[name*='keywords']").value = story.metadata.keywords;
   form.querySelector("input[name*='description']").value =
     story.metadata.description;
   form.querySelector("input[name*='external_url']").value = story.external_url;
+}
+
+function getFilePath(url) {
+  let filename = url.match(/(?<=organisations\/..........\/)(.*)(?=\?)/);
+  return "{Shorthand Local}/" + filename[0];
 }

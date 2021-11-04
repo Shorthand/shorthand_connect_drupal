@@ -144,6 +144,10 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     $this->body->value = $this->fixStoryContentPaths($body, $this->getExternalAssetsFlag());
     $this->body->format = $input_format;
 
+    // Remove OG Tags in body
+    $this->body->value = preg_replace('/<meta property="og:[a-z]+" content=".*">\n/', '', $this->body->value);
+    $this->body->value = preg_replace('/<meta name="twitter:[a-z]+" content=".*">\n/', '', $this->body->value);
+
     // Let parent preSave() run so other modules can alter the content before
     // being saved.
     parent::preSave($storage);

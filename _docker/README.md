@@ -1,4 +1,4 @@
-Drupal 8 docker
+Drupal 9 docker
 
 ```
 # If you intend to develop with a local dylan setup - copy the certificates.
@@ -10,7 +10,7 @@ cp -a ../dylan/ops/ci/nginx/certificates/. ./_docker/certificates/
 docker-compose --file _docker/docker-compose.yml up --detach --build
 ```
 
-Website is available at [0.0.0.0:8181](http://0.0.0.0:8181).
+Website is available at [0.0.0.0:9191](http://0.0.0.0:9191).
 
 ```
 # Install composer.
@@ -20,7 +20,7 @@ docker-compose --file _docker/docker-compose.yml exec web bash -c "php -r \"copy
 docker-compose --file _docker/docker-compose.yml exec web composer require --dev drush/drush
 
 # Install drupal, reset admin password (user admin, password `drupal`) and enable shorthand.
-docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get update && apt-get install -y default-mysql-client vim && cp web/sites/default/default.settings.php web/sites/default/settings.php && ./vendor/bin/drush -l default site:install standard -vvv -y --debug --db-url='mysql://root:rootp@mysql/mysqldb' && ./vendor/bin/drush -l default config:set system.site name -y 'Shorthand 8' && ./vendor/bin/drush -l default pm:enable -y shorthand && ./vendor/bin/drush -l default  -y user:password admin 'drupal' && mkdir -p web/sites/default/files && chmod 777 -R web/sites/default/files && ./vendor/bin/drush -l default cache:rebuild && ./vendor/bin/drush -l default user:login --uri='http://0.0.0.0:8181'"
+docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get update && apt-get install -y default-mysql-client vim && cp web/sites/default/default.settings.php web/sites/default/settings.php && ./vendor/bin/drush -l default site:install standard -vvv -y --debug --db-url='mysql://root:rootp@mysql/mysqldb' && ./vendor/bin/drush -l default config:set system.site name -y 'Shorthand 9' && ./vendor/bin/drush -l default pm:enable -y shorthand && ./vendor/bin/drush -l default  -y user:password admin 'drupal' && mkdir -p web/sites/default/files && chmod 777 -R web/sites/default/files && ./vendor/bin/drush -l default cache:rebuild && ./vendor/bin/drush -l default user:login --uri='http://0.0.0.0:9191'"
 
 To edit settings run `vi sites/default/settings.php` inside the container.
 

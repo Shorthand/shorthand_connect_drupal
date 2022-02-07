@@ -250,7 +250,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   Headers parameters array.
    */
   protected function buildHeaders($token = NULL) {
-    $config = $this->config->getEditable('shorthand.settings');
+    $config = $this->config->get('shorthand.settings');
     $config_token = $config->get('token');
     return [
       'Authorization' => ' Token ' . ($token ?? $config_token),

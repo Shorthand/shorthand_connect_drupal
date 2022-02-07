@@ -97,7 +97,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
     $apiservice = 'shorthand.api.v2';
     $head_file = '/head.html';
-    $body_file = '/article.html';
+    $body_file = '/index.html';
 
     // Download and extract Story .zip file.
     // @todo Allow user an ability to resync the story.
@@ -489,10 +489,12 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *   storage path.
    */
   protected function fixStoryContentPaths($content, $external_assets) {
-    $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
-    if(!$external_assets){
+    $absolute_assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
+    $assets_path = file_url_transform_relative($absolute_assets_path);
+    if (!$external_assets) {
       $content = str_replace('./assets/', $assets_path . '/assets/', $content);
-    }else{
+    }
+    else {
       $base_url = $this->getExternalPublishingConfiguration()->baseUrl;
       $base_url = $base_url !== "/"? $base_url : 'https://'.$this->getExternalPublishingConfiguration()->name.$base_url;
       $content = str_replace('./assets/', $base_url . 'assets/', $content);

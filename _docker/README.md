@@ -17,7 +17,7 @@ Website is available at [0.0.0.0:8181](http://0.0.0.0:8181).
 docker-compose --file _docker/docker-compose.yml exec web bash -c "php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\" && php composer-setup.php --install-dir=/usr/local/bin/ --filename=composer && php -r \"unlink('composer-setup.php');\""
 
 # Install drush.
-docker-compose --file _docker/docker-compose.yml exec web composer require --dev drush/drush
+docker-compose --file _docker/docker-compose.yml exec web composer require --dev drush/drush:10.6.2
 
 # Install drupal, reset admin password (user admin, password `drupal`) and enable shorthand.
 docker-compose --file _docker/docker-compose.yml exec web bash -c "apt-get update && apt-get install -y default-mysql-client vim && cp web/sites/default/default.settings.php web/sites/default/settings.php && ./vendor/bin/drush -l default site:install standard -vvv -y --debug --db-url='mysql://root:rootp@mysql/mysqldb' && ./vendor/bin/drush -l default config:set system.site name -y 'Shorthand 8' && ./vendor/bin/drush -l default pm:enable -y shorthand && ./vendor/bin/drush -l default  -y user:password admin 'drupal' && mkdir -p web/sites/default/files && chmod 777 -R web/sites/default/files && ./vendor/bin/drush -l default cache:rebuild && ./vendor/bin/drush -l default user:login --uri='http://0.0.0.0:8181'"

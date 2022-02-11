@@ -28,29 +28,28 @@ interface ShorthandApiInterface {
    *
    * @param string $id
    *   Story ID.
-   *  
+   *
    * @param object $params
    *   Params for GET request
-   *   
+   *
    * @return string
    *   Drupal URI to the story .zip file.
    */
   public function getStory($id, $params);
 
-   /**
+  /**
    * Download the story files and return the .zip file URI.
    *
    * @param string $id
    *   Story ID.
-   *  
+   *
    * @param object $publish configuration
    *   Publish configuration object
-   *   
-   * @return object
-   *   Drupal response status.
+   *
+   * @return object|bool
+   *   Drupal response status or FALSE.
    */
   public function publishAssets($id, $config);
-
 
   /**
    * Validate API key.

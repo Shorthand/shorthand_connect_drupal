@@ -1,5 +1,0 @@
-entity.shorthand_story.add_form:
-  route_name: entity.shorthand_story.add_form
-  title: 'Add Shorthand story'
-  appears_on:
-    - entity.shorthand_story.collection

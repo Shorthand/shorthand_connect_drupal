@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_shstory_metatags
+    - node.type.shorthand
+id: node.shorthand.field_shstory_metatags
+field_name: field_shstory_metatags
+entity_type: node
+bundle: shorthand
+label: 'Shorthand story metatags'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

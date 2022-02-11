@@ -1,6 +1,0 @@
-shorthandForm:
-  js:
-    js/shorthand-form.js: {}
-  css:
-    component:
-      css/shorthand-form.css: {}

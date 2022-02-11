@@ -4,17 +4,20 @@ namespace Drupal\shorthand\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\Core\Url;
 use Drupal\shorthand\ShorthandApiInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Component\Utility\Html;
 
 /**
  * Configure shorthand settings for this site.
  */
-class ShorthandStorySettingsForm extends ConfigFormBase {
+class ShorthandSettingsForm extends ConfigFormBase {
 
   /**
    * The manages modules.
@@ -63,8 +66,21 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
+  public static function create(ContainerInterface $container) {
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('config.factory'),
+      $container->get('current_user'),
+      $container->get('module_handler'),
+      $container->get('shorthand_api')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getFormId() {
-    return 'shorthand_admin_settings';
+    return 'shorthand_settings';
   }
 
   /**
@@ -81,8 +97,10 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
     $config = $this->config('shorthand.settings');
 
     $form['shorthand_token'] = [
-      '#default_value' => $config->get('token'),
-      '#description' => $this->t('Read how to obtain Shorthand API token <a href=":url" title="Shorthand api documentation">here</a>', [':url' => 'https://support.shorthand.com/en/articles/62-programmatic-publishing-with-the-shorthand-api']),
+      '#default_value' => $config->get('shorthand_token'),
+      '#description' => $this->t('Read how to obtain Shorthand API token <a href=":url" title="Shorthand api documentation" target="_blank">here</a>', [
+        ':url' => 'https://support.shorthand.com/en/articles/62-programmatic-publishing-with-the-shorthand-api',
+      ]),
       '#maxlength' => 100,
       '#required' => TRUE,
       '#size' => 50,
@@ -107,7 +125,8 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
     $form['shorthand_input_format'] = [
       '#type' => 'radios',
       '#title' => $this->t('Text field format'),
-      '#description' => $this->t('Text format for the Shorthand text field, it should allow full HTML, JS and CSS. <a href=":url">See all text formats</a>', [':url' => Url::fromRoute('filter.admin_overview')->toString()]),
+      '#description' => $this->t('Text format for the Shorthand text field, it should allow full HTML, JS and CSS. <a href=":url" target="_blank">See all text formats</a>', [':url' => Url::fromRoute('filter.admin_overview')
+        ->toString()]),
       '#options' => $text_format_options,
       '#required' => TRUE,
       '#default_value' => $config->get('input_format'),
@@ -120,7 +139,6 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // $isValid = \Drupal::service($apiservice)->validateApiKey($form_state->getValue('shorthand_token'));
     $isValid = $this->shorthandApi->validateApiKey($form_state->getValue('shorthand_token'));
     if (!$isValid) {
       $form_state->setErrorByName('shorthand_token', $this->t('API key is not valid.'));
@@ -133,25 +151,12 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('shorthand.settings');
     $config
-      ->set('token', $form_state->getValue('shorthand_token'))
+      ->set('shorthand_token', $form_state->getValue('shorthand_token'))
       ->set('request_timeout', $form_state->getValue('shorthand_request_timeout'))
       ->set('input_format', $form_state->getValue('shorthand_input_format'))
       ->save();
 
     parent::submitForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      // Load the service required to construct this class.
-      $container->get('config.factory'),
-      $container->get('current_user'),
-      $container->get('module_handler'),
-      $container->get('shorthand.api.v2')
-    );
   }
 
 }

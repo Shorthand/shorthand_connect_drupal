@@ -5,9 +5,21 @@ application which describes itself as "beautifully simple storytelling". It
 connects your Shorthand account with Drupal and allows you to publish your
 stories on a Drupal website.
 
+> :warning: **Version 3.0+**: There is no upgrade path from previous version. Uninstall previous version to install version 3.0.
+
 ## Installation
 
-- Install Drupal module.
+### Composer
+
+```
+composer require drupal/shorthand
+```
+
+### Download
+
+Install as you would normally install a contributed Drupal module. Visit:
+https://www.drupal.org/docs/extending-drupal/installing-modules
+for further information.
 
 ## Configuration
 
@@ -35,3 +47,12 @@ pages.
 
 There are several ways to display the story as a full page, just use the one
 who best suits you.
+
+# Authors
+
+* Andrew Dekker <@simultech>
+* Deji Akala <@dejiakala>
+* Gabriele Maira <@gambry>
+* Ben Hoad <@benhoad>
+* [Janna M](https://www.drupal.org/u/jannakha)
+* [Vladimir R](https://www.drupal.org/u/vladimiraus)

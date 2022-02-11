@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_shstory_resources
+    - node.type.shorthand
+  module:
+    - file
+id: node.shorthand.field_shstory_resources
+field_name: field_shstory_resources
+entity_type: node
+bundle: shorthand
+label: 'Shorthhand story resources'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: shorthand/resources
+  file_extensions: 'txt js css'
+  max_filesize: ''
+  description_field: false
+field_type: file

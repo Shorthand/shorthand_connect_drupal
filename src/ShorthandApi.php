@@ -3,18 +3,20 @@
 namespace Drupal\shorthand;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Client;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\Exception\BadResponseException;
 use Psr\Log\LoggerInterface;
 
 /**
- * Class for Shorthand's API handling (Versioning to be deprecated).
+ * Class for Shorthand's API handling.
+ *
+ *
  */
-class ShorthandApiV2 implements ShorthandApiInterface {
+class ShorthandApi implements ShorthandApiInterface {
 
   use StringTranslationTrait;
 
@@ -22,7 +24,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * Shorthand API URL.
    */
   const SHORTHAND_API_URL = 'https://api.shorthand.com/';
-
 
   /**
    * GuzzleHttp\Client definition.
@@ -84,11 +85,38 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   /**
    * {@inheritdoc}
    */
+  public function validateApiKey($token) {
+    try {
+      error_log('TESTING THIS');
+      error_log($this->getBaseUri());
+      $this->httpClient->get('v2/token-info/', [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders($token),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
+      ]);
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($message);
+      $this->logger->error($this->t('<strong>@error</strong><br />@trace', [
+        '@error' => $message,
+        '@trace' => $error->getTraceAsString(),
+      ]));
+      return FALSE;
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getProfile() {
     // @todo Implement getProfile() method.
   }
 
-    /**
+  /**
    * {@inheritdoc}
    */
   public function getPublishingConfigurations() {
@@ -179,11 +207,12 @@ class ShorthandApiV2 implements ShorthandApiInterface {
 
     try {
       $temp_path = $this->getStoryFileTempPath();
-      $this->httpClient->get('v2/stories/' . $id . (isset($params)? '?'.http_build_query($params) : '') , [
+      $this->httpClient->get('v2/stories/' . $id . (isset($params) ? '?' . http_build_query($params) : ''), [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'sink' => $temp_path,
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -200,37 +229,14 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   public function publishAssets($id, $config) {
 
+    $req = NULL;
     try {
-      $req = $this->httpClient->post('v2/stories/' . $id . '/publish' , [
+      $req = $this->httpClient->post('v2/stories/' . $id . '/publish', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'body' => json_encode($this->buildBody($config->id)),
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
-      ]);
-    }
-    catch (BadResponseException $error) {
-      $message = $error->getMessage();
-      $this->messenger->addError($message);
-      $this->messenger->addError($req);
-      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
-    }
-
-    return $temp_path;
-  }
-
-
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateApiKey($token) {
-    try {
-      error_log('TESTING THIS');
-      error_log($this->getBaseUri());
-      $this->httpClient->get('v2/token-info/', [
-        'base_uri' => $this->getBaseUri(),
-        'headers' => $this->buildHeaders($token),
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -240,7 +246,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
       return FALSE;
     }
 
-    return TRUE;
+    return $req;
   }
 
   /**
@@ -251,7 +257,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   protected function buildHeaders($token = NULL) {
     $config = $this->config->getEditable('shorthand.settings');
-    $config_token = $config->get('token');
+    $config_token = $config->get('shorthand_token');
     return [
       'Authorization' => ' Token ' . ($token ?? $config_token),
       'Content-Type' => 'application/json; charset=utf-8',
@@ -259,17 +265,16 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   }
 
   /**
-   * Build request body for external publishing
+   * Build request body for external publishing.
    *
    * @return array
-   *   Body array
+   *   Response body as array.
    */
-
   protected function buildBody($config) {
     return [
       'config' => $config,
       'url' => '',
-      "publishSubset" =>"assets_only"
+      "publishSubset" => "assets_only",
     ];
   }
 

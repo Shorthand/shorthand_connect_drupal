@@ -1,32 +1,5 @@
-# Shorthand story routing definition
-shorthand_story.settings_tab:
-  route_name: shorthand_story.settings
-  title: 'Settings'
-  base_route: shorthand_story.settings
-
-entity.shorthand_story.collection:
-  title: 'Shorthand'
-  route_name: entity.shorthand_story.collection
+shorthand.remote_collection:
+  title: Shorthand
+  route_name: shorthand.remote_collection
   base_route: system.admin_content
-  weight: 100
-
-entity.shorthand_story.canonical:
-  route_name: entity.shorthand_story.canonical
-  base_route: entity.shorthand_story.canonical
-  title: 'View'
-
-entity.shorthand_story.edit_form:
-  route_name: entity.shorthand_story.edit_form
-  base_route: entity.shorthand_story.canonical
-  title: 'Edit'
-
-entity.shorthand_story.version_history:
-  route_name: entity.shorthand_story.version_history
-  base_route: entity.shorthand_story.canonical
-  title: 'Revisions'
-
-entity.shorthand_story.delete_form:
-  route_name: entity.shorthand_story.delete_form
-  base_route: entity.shorthand_story.canonical
-  title: Delete
-  weight: 10
+  weight: 50

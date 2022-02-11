@@ -2,215 +2,143 @@
 
 /**
  * @file
- * Shorthand module .install file.
+ * Install, update, and uninstall functions for the Shorthand module.
  */
 
-use Drupal\shorthand\Entity\ShorthandStory;
-use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Url;
+use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * Implements hook_install().
+ */
+function shorthand_install($is_syncing) {
+  // Do not allow to delete the forum's node type machine name.
+  $locked = \Drupal::state()->get('node.type.locked');
+  $locked['shorthand'] = 'shorthand';
+  \Drupal::state()->set('node.type.locked', $locked);
+}
 
 /**
  * Implements hook_uninstall().
  */
 function shorthand_uninstall() {
-  // Delete config settings.
+  // Allow to delete a shorthand's node type.
+  $locked = \Drupal::state()->get('node.type.locked');
+  unset($locked['shorthand']);
+  \Drupal::state()->set('node.type.locked', $locked);
+
   \Drupal::configFactory()->getEditable('shorthand.settings')->delete();
-
-  // Existing stories deletion is already handled by the module uninstaller, so
-  // remove just the files/shorthand folder, if exists.
-  \Drupal::service('file_system')->deleteRecursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
+  \Drupal::messenger()->addMessage(t("Shorthand module has been uninstalled successfully."));
 }
 
 /**
- * Convert settings to config.
+ * Implements hook_schema().
  */
-function shorthand_8001(&$sandbox) {
-  $settings = \Drupal::service('settings');
-  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
-  $config
-    ->set('token', $settings->get('shorthand_token'))
-    ->set('version', '2')
-    ->set('input_format', $settings->get('shorthand_input_format'))
-    ->save();
-  return t('Shorthand settings have been migrated from settings.php.');
+function shorthand_schema() {
+  $schema['shorthand'] = [
+    'description' => 'Stores the relationship of nodes to forum terms.',
+    'fields' => [
+      'nid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {node}.nid of the node.',
+      ],
+      'vid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Primary Key: The {node}.vid of the node.',
+      ],
+    ],
+    'primary key' => ['vid'],
+  ];
+
+  $schema['forum_index'] = [
+    'description' => 'Maintains denormalized information about node/term relationships.',
+    'fields' => [
+      'nid' => [
+        'description' => 'The {node}.nid this record tracks.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'title' => [
+        'description' => 'The node title.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'sticky' => [
+        'description' => 'Boolean indicating whether the node is sticky.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+      ],
+      'created' => [
+        'description' => 'The Unix timestamp when the node was created.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'last_sync_timestamp' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The Unix timestamp of the last update from shorthand.',
+      ],
+    ],
+    'indexes' => [
+      'created' => ['created'],
+      'last_sync_timestamp' => ['last_sync_timestamp'],
+    ],
+    'foreign keys' => [
+      'tracked_node' => [
+        'table' => 'node',
+        'columns' => ['nid' => 'nid'],
+      ],
+    ],
+  ];
+
+  return $schema;
 }
 
 /**
- * Remove Version Dependancy and add extra fields.
+ * Implements hook_requirements().
  */
-function shorthand_update_8002() {
-  \Drupal::configFactory()
-    ->getEditable('shorthand.settings')
-    ->clear("version")
-    ->save();
+function shorthand_requirements($phase) {
+  $requirements = [];
 
-  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  if ($phase == 'runtime') {
+    // Validate API key.
+    $token = \Drupal::configFactory()
+      ->getEditable('shorthand.settings')
+      ->get('shorthand_token');
+    if ($token && \Drupal::service('shorthand_api')->validateApiKey($token)) {
+      $requirements['shorthand'] = [
+        'title' => t('Shorthand'),
+        'value' => t('API token'),
+        'severity' => REQUIREMENT_OK,
+        'description' => t('Successfully validated.'),
+      ];
+    }
+    else {
+      $requirements['shorthand'] = [
+        'title' => t('Shorthand'),
+        'value' => t('API token'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => t('Cannot be validated. Please validate <a href=":shorthand_settings">shorthand configuration</a>.', [
+          ':shorthand_settings' => Url::fromRoute('shorthand.settings_form')->toString(),
+        ]),
+      ];
+    }
+  }
 
-  $thumbnail = BaseFieldDefinition::create('string')
-    ->setLabel(t('Thumbnail'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => -4,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 3,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('thumbnail', 'shorthand_story', 'shorthand', $thumbnail);
-
-  $authors = BaseFieldDefinition::create('string')
-    ->setLabel(t('Authors'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => -4,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 3,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('authors', 'shorthand_story', 'shorthand', $authors);
-
-  $keywords = BaseFieldDefinition::create('string')
-    ->setLabel(t('Keywords'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => -4,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 3,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('keywords', 'shorthand_story', 'shorthand', $keywords);
-
-  $description = BaseFieldDefinition::create('string')
-    ->setLabel(t('Description'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => -4,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 4,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('description', 'shorthand_story', 'shorthand', $description);
-
-  $external_url = BaseFieldDefinition::create('string')
-    ->setLabel(t('Externally Published URL'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => -4,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 4,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_url);
-
-  return t('Shorthand settings updated.');
-}
-
-
-/**
- * Add field for external asset hosting - boolean
- */
-function shorthand_update_8003() {
-  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
-
-  $external_assets = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Use externally hosted assets.'))
-      ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
-      ->setRevisionable(TRUE)
-      ->setTranslatable(TRUE)
-      ->setDisplayOptions('view', [
-        'settings' => [
-          'format' => 'unicode-yes-no',
-        ],
-        'weight' => 1,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'boolean_checkbox',
-        'weight' => 1,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_assets);
-
-  $external_publishing_config = BaseFieldDefinition::create('string')
-    ->setLabel(t('Publishing Configuration'))
-    ->setDescription(t('The publishing configuration to use for assets.'))
-    ->setRevisionable(TRUE)
-    ->setSettings([
-      'max_length' => 255,
-      'text_processing' => 0,
-    ])
-    ->setDefaultValue('')
-    ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => 1,
-    ])
-    ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
-      'weight' => 1,
-    ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
-
-  $definition_update_manager->installFieldStorageDefinition('external_publishing_config', 'shorthand_story', 'shorthand', $external_publishing_config);
-
+  return $requirements;
 }

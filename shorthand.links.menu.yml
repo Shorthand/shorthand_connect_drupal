@@ -1,14 +1,11 @@
-
-# Shorthand story menu items definition
-entity.shorthand_story.collection:
-  title: 'Shorthand story list'
-  route_name: entity.shorthand_story.collection
-  description: 'List Shorthand story entities'
+shorthand.remote_collection:
+  title: 'Shorthand stories (remote)'
+  route_name: shorthand.remote_collection
+  description: 'List Shorthand remote stories'
   parent: system.admin_content
-  weight: 100
 
-shorthand.admin_settings_form:
+shorthand.settings_form:
   title: 'Shorthand settings'
-  parent: system.admin_config_content
+  parent: system.admin_config_services
   description: 'Configure Shorthand settings'
-  route_name: shorthand.admin_settings_form
+  route_name: shorthand.settings_form

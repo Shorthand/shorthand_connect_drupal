@@ -1,14 +1,25 @@
-shorthand.admin_settings_form:
-  path: '/admin/config/content/shorthand'
+shorthand.settings_form:
+  path: 'admin/config/services/shorthand'
   defaults:
-    _form: '\Drupal\shorthand\Form\ShorthandStorySettingsForm'
-    _title: 'Shorthand Settings'
+    _form: '\Drupal\shorthand\Form\ShorthandSettingsForm'
+    _title: 'Shorthand settings'
   requirements:
-    _permission: 'administer shorthand story entities'
-entity.shorthand_story.collection:
-  path: '/admin/content/shorthand-story'
+    _permission: 'administer shorthand'
+
+shorthand.remote_collection:
+  path: '/admin/content/shorthand'
   defaults:
-    _entity_list: 'shorthand_story'
-    _title: 'Shorthand Stories'
+    _controller: '\Drupal\shorthand\Controller\RemoteCollectionController::list'
+    _title: 'Shorthand stories (remote)'
   requirements:
-    _permission: 'access shorthand story overview'
+    _permission: 'access content'
+
+shorthand.create.story:
+  path: '/node/add/shorthand/{storyid}'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\RemoteCollectionController::createNewStory'
+    _title: 'Create new story'
+  requirements:
+    _permission: 'create shorthand content'
+  options:
+    _admin_route: TRUE

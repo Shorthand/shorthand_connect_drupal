@@ -28,7 +28,7 @@ shorthand.remote_collection:
     _controller: '\Drupal\shorthand\Controller\RemoteCollectionController::list'
     _title: 'Shorthand (remote)'
   requirements:
-    _permission: 'access content'
+    _permission: 'access shorthand story overview'
 
 shorthand.download.story:
   path: '/admin/content/shorthand/download/{storyid}'

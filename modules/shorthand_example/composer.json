@@ -1,0 +1,14 @@
+{
+  "name": "drupal/shorthand_example",
+  "type": "drupal-module",
+  "description": "Example Shorthand content type with example content.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/shorthand",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/shorthand",
+    "source": "http://cgit.drupalcode.org/shorthand"
+  },
+  "require": { }
+}

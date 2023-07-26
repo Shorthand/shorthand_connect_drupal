@@ -7,31 +7,46 @@ stories on a Drupal website.
 
 ## Installation
 
-- Install Drupal module.
+- [Install Drupal module](https://www.drupal.org/docs/extending-drupal/installing-modules).
 
-## Configuration
+## Configuration (version 4)
 
-- Login to [shorthand account](https://shorthand.com/signin) and
-  [generate API key](https://support.shorthand.com/en/articles/62-programmatic-publishing-with-the-shorthand-api).
+- Login to [shorthand account](https://shorthand.com/signin)
+  and [generate API key](https://support.shorthand.com/en/articles/62-programmatic-publishing-with-the-shorthand-api).
+- Visit configuration page at `/admin/config/services/shorthand` to set API key
+  and other settings.
+- Download remote stories locally at `/admin/content/shorthand`.
 
-- Create a new input format that supports HTML by visiting page `/admin/config/content/formats`, or use an existing one (Full HTML)
+![Download stories required](resources/shorthand-list-remote-stories.png)
 
-  - Ideally for this we want to avoid having filters adjusting the content.
+- [Add `Shorthand select` field](https://www.drupal.org/docs/user_guide/en/structure-fields.html)
+  (`Reference` field category) to desired entity (content type, taxonomy term or
+  user). Note that `Shorthand Story ID` field (`General` field category) was 
+  deprecated and will be removed in version 5.
 
-- Visit configuration page at `/admin/config/content/shorthand` to add API key and other settings.
+![Add `Shorthand select` field](resources/shorthand-new-field.png)
 
 ## Usage
 
-- Go to Content > Shorthand story list and add a Shorthand Story
+- When editing / managing entity with Shorthand field, select one of the
+downloaded stories.
 
-The Story content will be added to the body of the entity, which by default
-displays together with Name and Author when visiting the Story page.
+### No stories were downloaded
 
-You may want to alter the Display settings to hide the Title and the Author, as
-well as alter the page display for shorthand stories in order to hide
-everything but the story content itself. i.e. by changing the page.html.twig
-file, or through the Context contrib module creating a context for the stories
-pages.
+![Select Shorthand story - no stories](resources/shorthand-stories-no-stories.png)
 
-There are several ways to display the story as a full page, just use the one
-who best suits you.
+### Stories were downloaded
+
+![Select Shorthand story - no stories](resources/shorthand-stories-stories.png)
+
+### Metatags
+
+Make sure to enable modules `Metatag: Twitter Cards` and 
+`Metatag: Open Graph` from [Metatag module](https://www.drupal.org/project/metatag) 
+in order to leverage story metatags. If above modules are not enabled,
+existing metatags won't be processed.
+
+If metatags are overriden on the entity (node, user, taxonomy), 
+the story metatag will be discarded.
+
+If there are multiple stories, only first stiry metatags will be used.

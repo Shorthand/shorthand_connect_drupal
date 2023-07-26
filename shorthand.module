@@ -7,6 +7,7 @@
 
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\shorthand\Controller\RemoteCollectionController;
 use Drupal\shorthand\Entity\ShorthandStoryInterface;
 
 /**
@@ -14,29 +15,40 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  */
 function shorthand_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
-    // Main module help for the shorthand module.
+    // Help for the shorthand module.
     case 'help.page.shorthand':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('A module that allows the publishing of Shorthand stories directly to Drupal.') . '</p>';
-      return $output;
-
-    default:
+      $output .= '<p>' . t('A module that allows the publishing of Shorthand stories directly to Drupal entities.') . '</p><ul>';
+      $output .= '<li>' . t('Login to <em>shorthand account</em> and <em>generate API key</em> (links are in README.md file).') . '</li>';
+      $output .= '<li>' . t('Visit configuration page at <em>/admin/config/services/shorthand</em> to set API key and other settings.') . '</li>';
+      $output .= '<li>' . t('Download remote stories locally at <em>/admin/content/shorthand</em>.') . '</li>';
+      $output .= '<li>' . t('Add <em>Shorthand select</em> field (`Reference` field category) to desired entity (content type, taxonomy term, user, ...). Note that <em>Shorthand Story ID</em> field (`General` field category) was deprecated and will be removed in version 5.') . '</li>';
+      $output .= '<li>' . t('When managing entity with Shorthand field, select one of the
+downloaded stories.') . '</li>';
+      $output .= '</ul>';
+      break;
   }
+
+  return $output;
 }
 
 /**
  * Implements hook_preprocess_HOOK().
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 function shorthand_preprocess_html(&$variables) {
   if (
     ($story = \Drupal::routeMatch()->getParameter('shorthand_story')) &&
     ($story instanceof ShorthandStoryInterface)
   ) {
-    $files_url = file_create_url($story->getShorthandStoryFilesStorageUri());
+    $files_url = \Drupal::service('file_url_generator')
+      ->generateAbsoluteString($story->getShorthandStoryFilesStorageUri());
     $node_url = $story->toUrl()->setAbsolute()->toString();
     $html_head = $story->get('head')->value;
     if (strpos($html_head, 'amphtml') !== FALSE) {
+
       // Replace AMP url if present.
       $amp_url = $files_url;
       $amp_url .= '/amp-index.html';
@@ -78,6 +90,8 @@ function shorthand_preprocess_html(&$variables) {
 
 /**
  * Implements hook_theme().
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 function shorthand_theme() {
   return [
@@ -86,4 +100,67 @@ function shorthand_theme() {
       'file' => 'shorthand.page.inc',
     ],
   ];
+}
+
+/**
+ * Implements hook_metatags_alter().
+ */
+function shorthand_metatags_alter(array &$metatags, array &$context) {
+  if (!\Drupal::moduleHandler()->moduleExists('metatag')) {
+    return;
+  }
+
+  // Ignore some system routes that are not appropriate for meta tags.
+  if (metatag_is_current_route_supported() && $context['entity']) {
+    // Detect shorthand field.
+    foreach ($context['entity']->getFieldDefinitions() as $name => $definition) {
+
+      if (($definition->getType() === 'shorthand_local') &&
+        ($path = $context['entity']->$name->value)
+      ) {
+        // Parse metatags.
+        $filePathHead = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/head.html';
+        $metas = strip_tags(file_get_contents($filePathHead), '<meta>');
+
+        $doc = new DOMDocument();
+        $doc->loadHTML($metas);
+        $xpath = new DOMXPath($doc);
+        foreach ($xpath->query('//meta') as $node) {
+          $attributes = [];
+          if ($node->attributes) {
+            for ($index = 0; $index < $node->attributes->length; $index++) {
+              $attribute = $node->attributes->item($index);
+              $attributes[$attribute->name] = $attribute->value;
+            }
+
+            // Make sure tag is not set in Drupal.
+            if (in_array('content', array_keys($attributes)) &&
+              (in_array('property', array_keys($attributes)) ||
+                in_array('name', array_keys($attributes)))) {
+              $metaname = str_replace('og:', 'og_',
+                str_replace('twitter:', 'twitter_cards_',
+                  $attributes['property'] ?? $attributes['name']));
+              if (!in_array($metaname, array_merge(array_keys($metatags), [
+                'generator',
+              ]))) {
+                $metatags[$metaname] = $attributes['content'];
+              }
+
+              // Modify image tokens.
+              if (in_array($metaname, [
+                  'twitter_cards_image',
+                  'og_image',
+                ]) && strlen($attributes['content'])) {
+                $content = explode('/assets/', $attributes['content']);
+                if (is_array($content) && count($content) > 1) {
+                  $metatags[$metaname] = \Drupal::service('file_url_generator')
+                    ->generateAbsoluteString('public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/assets/' . $content[1]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

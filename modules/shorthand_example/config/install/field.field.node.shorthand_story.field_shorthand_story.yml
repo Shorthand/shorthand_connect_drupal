@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_shorthand_story
+    - node.type.shorthand_story
+  module:
+    - shorthand
+id: node.shorthand_story.field_shorthand_story
+field_name: field_shorthand_story
+entity_type: node
+bundle: shorthand_story
+label: 'Shorthand story'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: '0'
+default_value_callback: ''
+settings: {  }
+field_type: shorthand_local

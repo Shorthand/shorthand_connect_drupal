@@ -14,6 +14,8 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  * Shorthand story entities.
  *
  * @ingroup shorthand
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
 
@@ -25,6 +27,8 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    *
    * @return int[]
    *   Shorthand story revision IDs (in ascending order).
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function revisionIds(ShorthandStoryInterface $entity);
 
@@ -36,6 +40,8 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    *
    * @return int[]
    *   Shorthand story revision IDs (in ascending order).
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function userRevisionIds(AccountInterface $account);
 
@@ -47,6 +53,8 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    *
    * @return int
    *   The number of revisions in the default language.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function countDefaultLanguageRevisions(ShorthandStoryInterface $entity);
 
@@ -55,6 +63,8 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    *
    * @param \Drupal\Core\Language\LanguageInterface $language
    *   The language object.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function clearRevisionsLanguage(LanguageInterface $language);
 

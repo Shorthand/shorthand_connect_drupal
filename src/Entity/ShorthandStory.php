@@ -24,13 +24,6 @@ use Drupal\user\UserInterface;
  *     "list_builder" = "Drupal\shorthand\ShorthandStoryListBuilder",
  *     "views_data" = "Drupal\shorthand\Entity\ShorthandStoryViewsData",
  *     "translation" = "Drupal\shorthand\ShorthandStoryTranslationHandler",
- *
- *     "form" = {
- *       "default" = "Drupal\shorthand\Form\ShorthandStoryForm",
- *       "add" = "Drupal\shorthand\Form\ShorthandStoryForm",
- *       "edit" = "Drupal\shorthand\Form\ShorthandStoryForm",
- *       "delete" = "Drupal\shorthand\Form\ShorthandStoryDeleteForm",
- *     },
  *     "access" = "Drupal\shorthand\ShorthandStoryAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\shorthand\ShorthandStoryHtmlRouteProvider",
@@ -58,18 +51,14 @@ use Drupal\user\UserInterface;
  *   },
  *   links = {
  *     "canonical" = "/shorthand-story/{shorthand_story}",
- *     "add-form" = "/admin/content/shorthand-story/add",
- *     "edit-form" = "/admin/content/shorthand-story/{shorthand_story}/edit",
- *     "delete-form" = "/admin/content/shorthand-story/{shorthand_story}/delete",
  *     "version-history" = "/admin/content/shorthand-story/{shorthand_story}/revisions",
  *     "revision" = "/admin/content/shorthand-story/{shorthand_story}/revisions/{shorthand_story_revision}/view",
- *     "revision_revert" = "/admin/content/shorthand-story/{shorthand_story}/revisions/{shorthand_story_revision}/revert",
- *     "revision_delete" = "/admin/content/shorthand-story/{shorthand_story}/revisions/{shorthand_story_revision}/delete",
- *     "translation_revert" = "/admin/content/shorthand-story/{shorthand_story}/revisions/{shorthand_story_revision}/revert/{langcode}",
  *     "collection" = "/admin/content/shorthand-story",
  *   },
  *   field_ui_base_route = "shorthand_story.settings"
  * )
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 class ShorthandStory extends RevisionableContentEntityBase implements ShorthandStoryInterface {
 
@@ -77,11 +66,15 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
   /**
    * Defines shorthand's stories container base path.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   const SHORTHAND_STORY_BASE_PATH = 'shorthand/stories';
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
@@ -92,6 +85,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function preSave(EntityStorageInterface $storage) {
 
@@ -101,11 +96,11 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
     // Download and extract Story .zip file.
     // @todo Allow user an ability to resync the story.
-    $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId(), ( $this->getExternalAssetsFlag() ? array('without_assets'=>true) : []));
+    $file = \Drupal::service($apiservice)->getStory($this->getShorthandStoryId(), ($this->getExternalAssetsFlag() ? ['without_assets' => TRUE] : []));
 
-    //Publish the external assets to the selected publish configuration
-    if($this->getExternalAssetsFlag()){
-      //Publish external assets
+    // Publish the external assets to the selected publish configuration.
+    if ($this->getExternalAssetsFlag()) {
+      // Publish external assets.
       \Drupal::service($apiservice)->publishAssets($this->getShorthandStoryId(), $this->getExternalPublishingConfiguration());
     }
     $input_format = \Drupal::configFactory()->getEditable('shorthand.settings')->get('input_format');
@@ -140,11 +135,11 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       "UTF-8"
     );
 
-    //Split based on external assets flag
+    // Split based on external assets flag.
     $this->body->value = $this->fixStoryContentPaths($body, $this->getExternalAssetsFlag());
     $this->body->format = $input_format;
 
-    // Remove OG Tags in body
+    // Remove OG Tags in body.
     $this->body->value = preg_replace('/<meta property="og:[a-z]+" content=".*">\n/', '', $this->body->value);
     $this->body->value = preg_replace('/<meta name="twitter:[a-z]+" content=".*">\n/', '', $this->body->value);
 
@@ -167,12 +162,12 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       $this->setRevisionUserId($this->getOwnerId());
     }
 
-    // If locally referencing the Shorthand Thumbnail - replace the {Shorthand Local} 
-    // tag with the new local path
+    // If locally referencing the Shorthand Thumbnail - replace the
+    // {Shorthand Local} tag with the new local path.
     $thumb = $this->thumbnail->value;
-    if(empty($thumb) || strpos($thumb, '{Shorthand Local}/') !== false){
-      $assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
-      $thumb = str_replace('{Shorthand Local}/', $assets_path.'/assets/', $thumb);
+    if (empty($thumb) || strpos($thumb, '{Shorthand Local}/') !== FALSE) {
+      $assets_path = \Drupal::service('file_url_generator')->generateAbsoluteString($this->getShorthandStoryFilesStorageUri());
+      $thumb = str_replace('{Shorthand Local}/', $assets_path . '/assets/', $thumb);
       $this->thumbnail->value = $thumb;
     }
 
@@ -180,6 +175,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function getShorthandStoryId() {
     return $this->get('shorthand_id')->value;
@@ -187,6 +184,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function getExternalAssetsFlag() {
     return $this->get('external_assets')->value == 1;
@@ -194,6 +193,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function getExternalPublishingConfiguration() {
     return json_decode($this->get('external_publishing_config')->value);
@@ -421,7 +422,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
-    
+
     $fields['external_publishing_config'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Publishing Configuration ID'))
       ->setDescription(t('Shorthand Publishing Configuration ID.'))
@@ -436,7 +437,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
       ])
       ->setDisplayConfigurable('form', FALSE)
       ->setDisplayConfigurable('view', FALSE);
-    
+
     // $story = new ShorthandStory();
     $fields['thumbnail'] = ShorthandStory::createStringField(t('Thumbnail'), t('The thumbnail url of the Shorthand story entity.'));
     $fields['authors'] = ShorthandStory::createStringField(t('Authors'), t('The Authors of the Shorthand story entity.'));
@@ -483,20 +484,22 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *
    * @param string $content
    *   Shorthand Story's HTML markup to be processed.
+   * @param string $external_assets
+   *   Path to external assets.
    *
    * @return string
    *   Content processed with all path relative to Drupal's Shorthand story
    *   storage path.
    */
   protected function fixStoryContentPaths($content, $external_assets) {
-    $absolute_assets_path = file_create_url($this->getShorthandStoryFilesStorageUri());
-    $assets_path = file_url_transform_relative($absolute_assets_path);
+    $absolute_assets_path = \Drupal::service('file_url_generator')->generateAbsoluteString($this->getShorthandStoryFilesStorageUri());
+    $assets_path = \Drupal::service('file_url_generator')->transformRelative($absolute_assets_path);
     if (!$external_assets) {
       $content = str_replace('./assets/', $assets_path . '/assets/', $content);
     }
     else {
       $base_url = $this->getExternalPublishingConfiguration()->baseUrl;
-      $base_url = $base_url !== "/"? $base_url : 'https://'.$this->getExternalPublishingConfiguration()->name.$base_url;
+      $base_url = $base_url !== "/" ? $base_url : 'https://' . $this->getExternalPublishingConfiguration()->name . $base_url;
       $content = str_replace('./assets/', $base_url . 'assets/', $content);
     }
     $content = str_replace('./static/', $assets_path . '/static/', $content);

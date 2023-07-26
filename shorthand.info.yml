@@ -1,9 +1,15 @@
 name: Shorthand
 type: module
 description: A module that allows the publishing of Shorthand stories directly to Drupal.
-core_version_requirement: ^8.8 | ^9
-package: Other
+core_version_requirement: ^9.3 || ^10
+package: Shorthand
 
 dependencies:
   - drupal:text
-configure: shorthand.admin_settings_form
+
+configure: shorthand.settings_form
+
+# Information added by Drupal.org packaging script on 2022-11-20
+version: '4.0.2'
+project: 'shorthand'
+datestamp: 1668925450

@@ -5,19 +5,22 @@
  * Shorthand module .install file.
  */
 
-use Drupal\shorthand\Entity\ShorthandStory;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\shorthand\Entity\ShorthandStory;
 
 /**
  * Implements hook_uninstall().
  */
 function shorthand_uninstall() {
   // Delete config settings.
-  \Drupal::configFactory()->getEditable('shorthand.settings')->delete();
+  \Drupal::configFactory()
+    ->getEditable('shorthand.settings')
+    ->delete();
 
   // Existing stories deletion is already handled by the module uninstaller, so
   // remove just the files/shorthand folder, if exists.
-  \Drupal::service('file_system')->deleteRecursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
+  \Drupal::service('file_system')
+    ->deleteRecursive('public://' . ShorthandStory::SHORTHAND_STORY_BASE_PATH);
 }
 
 /**
@@ -25,7 +28,8 @@ function shorthand_uninstall() {
  */
 function shorthand_8001(&$sandbox) {
   $settings = \Drupal::service('settings');
-  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+  $config = \Drupal::configFactory()
+    ->getEditable('shorthand.settings');
   $config
     ->set('token', $settings->get('shorthand_token'))
     ->set('version', '2')
@@ -163,30 +167,29 @@ function shorthand_update_8002() {
   return t('Shorthand settings updated.');
 }
 
-
 /**
- * Add field for external asset hosting - boolean
+ * Add field for external asset hosting - boolean.
  */
 function shorthand_update_8003() {
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
 
   $external_assets = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Use externally hosted assets.'))
-      ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
-      ->setRevisionable(TRUE)
-      ->setTranslatable(TRUE)
-      ->setDisplayOptions('view', [
-        'settings' => [
-          'format' => 'unicode-yes-no',
-        ],
-        'weight' => 1,
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'boolean_checkbox',
-        'weight' => 1,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayConfigurable('view', TRUE);
+    ->setLabel(t('Use externally hosted assets.'))
+    ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
+    ->setRevisionable(TRUE)
+    ->setTranslatable(TRUE)
+    ->setDisplayOptions('view', [
+      'settings' => [
+        'format' => 'unicode-yes-no',
+      ],
+      'weight' => 1,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'boolean_checkbox',
+      'weight' => 1,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
 
   $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_assets);
 
@@ -213,4 +216,16 @@ function shorthand_update_8003() {
 
   $definition_update_manager->installFieldStorageDefinition('external_publishing_config', 'shorthand_story', 'shorthand', $external_publishing_config);
 
+}
+
+/**
+ * Move shorthand token to different property.
+ */
+function shorthand_update_9001() {
+  $config = \Drupal::configFactory()
+    ->getEditable('shorthand.settings');
+
+  $config
+    ->set('shorthand_token', $config->get('token'))
+    ->save();
 }

@@ -3,16 +3,19 @@
 namespace Drupal\shorthand;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Client;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use GuzzleHttp\Exception\BadResponseException;
 use Psr\Log\LoggerInterface;
 
 /**
  * Class for Shorthand's API handling (Versioning to be deprecated).
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ *   ShorthandApi class.
  */
 class ShorthandApiV2 implements ShorthandApiInterface {
 
@@ -22,7 +25,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * Shorthand API URL.
    */
   const SHORTHAND_API_URL = 'https://api.shorthand.com/';
-
 
   /**
    * GuzzleHttp\Client definition.
@@ -72,6 +74,12 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   The logger instance.
    * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory instance.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi class.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::__construct()
    */
   public function __construct(Client $http_client, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger, ConfigFactoryInterface $config_factory) {
     $this->config = $config_factory;
@@ -83,13 +91,25 @@ class ShorthandApiV2 implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getProfile().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getProfile()
    */
   public function getProfile() {
     // @todo Implement getProfile() method.
   }
 
-    /**
+  /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getPublishingConfigurations().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getPublishingConfigurations()
    */
   public function getPublishingConfigurations() {
 
@@ -128,7 +148,50 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   }
 
   /**
+   * Return Shorthand API base uri.
+   *
+   * @return string
+   *   Shorthand API base url.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getBaseUri().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getBaseUri()
+   */
+  protected function getBaseUri() {
+    return self::SHORTHAND_API_URL;
+  }
+
+  /**
+   * Build request headers, including authentication parameters.
+   *
+   * @return array
+   *   Headers parameters array.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:buildHeaders().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::buildHeaders()
+   */
+  protected function buildHeaders($token = NULL) {
+    $config = $this->config->get('shorthand.settings');
+    $config_token = $config->get('shorthand_token');
+    return [
+      'Authorization' => ' Token ' . ($token ?? $config_token),
+      'Content-Type' => 'application/json; charset=utf-8',
+    ];
+  }
+
+  /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStories().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getStories()
    */
   public function getStories() {
 
@@ -174,16 +237,23 @@ class ShorthandApiV2 implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStory().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getStory()
    */
   public function getStory($id, $params) {
 
     try {
       $temp_path = $this->getStoryFileTempPath();
-      $this->httpClient->get('v2/stories/' . $id . (isset($params)? '?'.http_build_query($params) : '') , [
+      $this->httpClient->get('v2/stories/' . $id . (isset($params) ? '?' . http_build_query($params) : ''), [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'sink' => $temp_path,
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -196,32 +266,77 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   }
 
   /**
+   * Return path to temporary file where to upload story .zip file.
+   *
+   * @return string
+   *   Path.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStoryFileTempPath().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::getStoryFileTempPath()
+   */
+  protected function getStoryFileTempPath() {
+    return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
+  }
+
+  /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:publishAssets().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::publishAssets()
    */
   public function publishAssets($id, $config) {
-
+    $request = NULL;
     try {
-      $req = $this->httpClient->post('v2/stories/' . $id . '/publish' , [
+      $request = $this->httpClient->post('v2/stories/' . $id . '/publish', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'body' => json_encode($this->buildBody($config->id)),
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
       $message = $error->getMessage();
       $this->messenger->addError($message);
-      $this->messenger->addError($req);
+      $this->messenger->addError($request);
       $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
     }
-
-    return $temp_path;
   }
 
-
+  /**
+   * Build request body for external publishing.
+   *
+   * @return array
+   *   Body array.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:buildBody().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::buildBody()
+   */
+  protected function buildBody($config) {
+    return [
+      'config' => $config,
+      'url' => '',
+      "publishSubset" => "assets_only",
+    ];
+  }
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:validateApiKey().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   * @see Drupal\shorthand\ShorthandApiInterface::validateApiKey()
    */
   public function validateApiKey($token) {
     try {
@@ -230,7 +345,8 @@ class ShorthandApiV2 implements ShorthandApiInterface {
       $this->httpClient->get('v2/token-info/', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders($token),
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
       ]);
     }
     catch (BadResponseException $error) {
@@ -241,56 +357,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
     }
 
     return TRUE;
-  }
-
-  /**
-   * Build request headers, including authentication parameters.
-   *
-   * @return array
-   *   Headers parameters array.
-   */
-  protected function buildHeaders($token = NULL) {
-    $config = $this->config->get('shorthand.settings');
-    $config_token = $config->get('token');
-    return [
-      'Authorization' => ' Token ' . ($token ?? $config_token),
-      'Content-Type' => 'application/json; charset=utf-8',
-    ];
-  }
-
-  /**
-   * Build request body for external publishing
-   *
-   * @return array
-   *   Body array
-   */
-
-  protected function buildBody($config) {
-    return [
-      'config' => $config,
-      'url' => '',
-      "publishSubset" =>"assets_only"
-    ];
-  }
-
-  /**
-   * Return Shorthand API base uri.
-   *
-   * @return string
-   *   Shorthand API base url.
-   */
-  protected function getBaseUri() {
-    return self::SHORTHAND_API_URL;
-  }
-
-  /**
-   * Return path to temporary file where to upload story .zip file.
-   *
-   * @return string
-   *   Path.
-   */
-  protected function getStoryFileTempPath() {
-    return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
   }
 
 }

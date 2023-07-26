@@ -3,8 +3,8 @@
 namespace Drupal\shorthand;
 
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\shorthand\Entity\ShorthandStoryInterface;
 
 /**
@@ -14,11 +14,15 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  * Shorthand story entities.
  *
  * @ingroup shorthand
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 class ShorthandStoryStorage extends SqlContentEntityStorage implements ShorthandStoryStorageInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function revisionIds(ShorthandStoryInterface $entity) {
     return $this->database->query(
@@ -29,6 +33,8 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function userRevisionIds(AccountInterface $account) {
     return $this->database->query(
@@ -39,6 +45,8 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function countDefaultLanguageRevisions(ShorthandStoryInterface $entity) {
     return $this->database->query('SELECT COUNT(*) FROM {shorthand_story_field_revision} WHERE id = :id AND default_langcode = 1', [':id' => $entity->id()])
@@ -47,6 +55,8 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function clearRevisionsLanguage(LanguageInterface $language) {
     return $this->database->update('shorthand_story_revision')

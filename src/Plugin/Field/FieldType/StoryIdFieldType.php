@@ -15,15 +15,19 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @FieldType(
  *   id = "shorthand_story_id",
- *   label = @Translation("Shorthand Story ID"),
- *   description = @Translation("Shorthand Story ID field type."),
+ *   label = @Translation("Shorthand Story ID (deprecated)"),
+ *   description = @Translation("Shorthand Story ID field type. Deprecated and will be removed in 5.0."),
  *   default_widget = "shorthand_story_select"
  * )
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function defaultStorageSettings() {
     return [
@@ -35,6 +39,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     // Prevent early t() calls by using the TranslatableMarkup.
@@ -48,6 +54,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     $schema = [
@@ -65,6 +73,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function getConstraints() {
     $constraints = parent::getConstraints();
@@ -89,6 +99,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
     $random = new Random();
@@ -98,6 +110,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function storageSettingsForm(array &$form, FormStateInterface $form_state, $has_data) {
     $elements = [];
@@ -117,6 +131,8 @@ class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function isEmpty() {
     $value = $this->get('value')->getValue();

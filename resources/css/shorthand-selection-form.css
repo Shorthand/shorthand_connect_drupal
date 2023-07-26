@@ -1,0 +1,124 @@
+.shorthand-story {
+  background: white;
+  border-radius: 14px;
+  display: flex;
+  margin: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.shorthand-story .story-details {
+  padding: 4px;
+  flex: 1;
+}
+
+.shorthand-story .story-details span {
+  font-weight: bold;
+}
+
+.shorthand-story .story-details h3 {
+  margin: 0.3rem 0 0.25rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.shorthand-story .story-details p {
+  margin: 0em 0;
+  font-size: 10pt;
+}
+
+.shorthand-story .story-versions {
+  display: flex;
+  flex-direction: column;
+}
+
+.shorthand-story .story-details .story-versions .story-version-option {
+  background: #fafafa;
+  font-size: 9pt;
+  padding: 8px 12px;
+  margin: 4px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.shorthand-story:hover .story-version-option:first-of-type {
+  background: rgb(237, 237, 237);
+}
+
+.shorthand-story.selected:hover .story-version-option:first-of-type {
+  background: initial;
+}
+
+.shorthand-story .story-details .story-versions .story-version-option:hover {
+  background: rgb(227, 227, 227);
+}
+
+.shorthand-story.selected
+  .story-details
+  .story-versions
+  .story-version-option.selected {
+  background: #000;
+  color: white;
+}
+
+.shorthand-story.selected .story-details .story-versions .story-version-option {
+  background: #444;
+}
+
+.shorthand-story.selected
+  .story-details
+  .story-versions
+  .story-version-option:hover {
+  background: #222;
+}
+
+.shorthand-story:hover {
+  background: #fefefe;
+}
+
+.shorthand-story.selected {
+  background: #555;
+  color: white;
+}
+
+.shorthand-story img {
+  width: 200px;
+  min-height: 112px;
+  margin-right: 10px;
+  background: grey;
+  margin: 10px;
+  border-radius: 10px;
+}
+
+.shorthand-story span {
+}
+
+#edit-field-shorthand-story-wrapper {
+  border: solid rgb(225, 225, 225) 1px;
+  background: rgb(251, 251, 251);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+#edit-field-shorthand-story-wrapper > .form-item {
+  margin: 10px;
+}
+
+#story_filter {
+  margin: 0;
+  width: 100%;
+}
+
+.shorthand-stories-wrapper {
+  max-height: 50vh;
+  overflow: auto;
+}
+
+.hide {
+  display: none !important;
+}
+
+#shorthand-stories-data {
+  display: none;
+}

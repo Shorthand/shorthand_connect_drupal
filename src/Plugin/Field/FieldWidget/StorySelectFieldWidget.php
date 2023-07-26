@@ -20,6 +20,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *     "shorthand_story_id"
  *   }
  * )
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
  */
 class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
@@ -27,11 +29,15 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    * Shorthand Api service.
    *
    * @var \Drupal\shorthand\ShorthandApiInterface
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   protected $shorthandApi;
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
@@ -41,6 +47,8 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -55,11 +63,13 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element['value'] = $element + [
       '#type' => 'select',
-      '#default_value' => isset($items[$delta]->value) ? $items[$delta]->value : NULL,
+      '#default_value' => $items[$delta]->value ?? NULL,
       '#options' => $this->buildStoriesList(),
       '#suffix' => '<div id="shorthand-stories-data">' . json_encode($this->shorthandStories) . '</div>',
     ];
@@ -72,6 +82,8 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    *
    * @return array
    *   Array of Shorthand stories, keyed by Story ID.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
    */
   protected function buildStoriesList() {
     if (($stories = $this->shorthandStories) !== FALSE) {

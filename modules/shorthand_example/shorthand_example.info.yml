@@ -1,0 +1,14 @@
+name: Shorthand example
+type: module
+description: Example Shorthand content type with example content.
+core_version_requirement: ^9.3 || ^10
+package: Shorthand
+
+dependencies:
+  - drupal:node
+  - shorthand:shorthand
+
+# Information added by Drupal.org packaging script on 2022-11-20
+version: '4.0.2'
+project: 'shorthand'
+datestamp: 1668925450

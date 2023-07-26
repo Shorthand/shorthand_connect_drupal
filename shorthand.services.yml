@@ -1,7 +1,19 @@
 services:
+  shorthand_api:
+    class: Drupal\shorthand\ShorthandApi
+    arguments: ['@http_client', '@file_system', '@messenger', '@logger.channel.shorthand', '@config.factory']
+
   shorthand.api.v2:
     class: Drupal\shorthand\ShorthandApiV2
     arguments: ['@http_client', '@file_system', '@messenger', '@logger.channel.shorthand', '@config.factory']
+
   logger.channel.shorthand:
     parent: logger.channel_base
     arguments: ['shorthand']
+
+  shorthand.uninstall_validator:
+    class: Drupal\shorthand\ShorthandUninstallValidator
+    tags:
+      - { name: module_install.uninstall_validator }
+    arguments: ['@entity_type.manager', '@config.factory', '@string_translation']
+    lazy: true

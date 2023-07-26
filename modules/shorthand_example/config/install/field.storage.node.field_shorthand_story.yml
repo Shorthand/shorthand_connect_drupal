@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - shorthand
+id: node.field_shorthand_story
+field_name: field_shorthand_story
+entity_type: node
+type: shorthand_local
+settings: {  }
+module: shorthand
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

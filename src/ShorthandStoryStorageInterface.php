@@ -3,8 +3,8 @@
 namespace Drupal\shorthand;
 
 use Drupal\Core\Entity\ContentEntityStorageInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\shorthand\Entity\ShorthandStoryInterface;
 
 /**
@@ -15,7 +15,9 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  *
  * @ingroup shorthand
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
 
@@ -28,7 +30,9 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    * @return int[]
    *   Shorthand story revision IDs (in ascending order).
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function revisionIds(ShorthandStoryInterface $entity);
 
@@ -41,7 +45,9 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    * @return int[]
    *   Shorthand story revision IDs (in ascending order).
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function userRevisionIds(AccountInterface $account);
 
@@ -54,7 +60,9 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    * @return int
    *   The number of revisions in the default language.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function countDefaultLanguageRevisions(ShorthandStoryInterface $entity);
 
@@ -64,7 +72,9 @@ interface ShorthandStoryStorageInterface extends ContentEntityStorageInterface {
    * @param \Drupal\Core\Language\LanguageInterface $language
    *   The language object.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function clearRevisionsLanguage(LanguageInterface $language);
 

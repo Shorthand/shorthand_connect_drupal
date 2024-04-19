@@ -12,7 +12,9 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup shorthand
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInterface, EntityChangedInterface, EntityOwnerInterface {
 
@@ -22,7 +24,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return string
    *   The shorthand story ID.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getShorthandStoryId();
 
@@ -32,7 +36,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return string
    *   Shorthand story body (component_article.html).
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getBody();
 
@@ -42,7 +48,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return string
    *   Name of the Shorthand story.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getName();
 
@@ -55,7 +63,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\shorthand\Entity\ShorthandStoryInterface
    *   The called Shorthand story entity.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function setName($name);
 
@@ -65,7 +75,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return int
    *   Creation timestamp of the Shorthand story.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getCreatedTime();
 
@@ -78,7 +90,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\shorthand\Entity\ShorthandStoryInterface
    *   The called Shorthand story entity.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function setCreatedTime($timestamp);
 
@@ -90,7 +104,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return bool
    *   TRUE if the Shorthand story is published.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function isPublished();
 
@@ -103,7 +119,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\shorthand\Entity\ShorthandStoryInterface
    *   The called Shorthand story entity.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function setPublished($published);
 
@@ -113,7 +131,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return int
    *   The UNIX timestamp of when this revision was created.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getRevisionCreationTime();
 
@@ -126,7 +146,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\shorthand\Entity\ShorthandStoryInterface
    *   The called Shorthand story entity.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function setRevisionCreationTime($timestamp);
 
@@ -136,7 +158,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\user\UserInterface
    *   The user entity for the revision author.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getRevisionUser();
 
@@ -149,7 +173,9 @@ interface ShorthandStoryInterface extends RevisionableInterface, RevisionLogInte
    * @return \Drupal\shorthand\Entity\ShorthandStoryInterface
    *   The called Shorthand story entity.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function setRevisionUserId($uid);
 

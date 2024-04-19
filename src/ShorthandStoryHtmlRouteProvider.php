@@ -12,14 +12,18 @@ use Symfony\Component\Routing\Route;
  * @see \Drupal\Core\Entity\Routing\AdminHtmlRouteProvider
  * @see \Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStoryHtmlRouteProvider extends AdminHtmlRouteProvider {
 
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getRoutes(EntityTypeInterface $entity_type) {
     $collection = parent::getRoutes($entity_type);
@@ -50,7 +54,9 @@ class ShorthandStoryHtmlRouteProvider extends AdminHtmlRouteProvider {
    * @return \Symfony\Component\Routing\Route|null
    *   The generated route, if available.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   protected function getHistoryRoute(EntityTypeInterface $entity_type) {
     if ($entity_type->hasLinkTemplate('version-history')) {
@@ -76,7 +82,9 @@ class ShorthandStoryHtmlRouteProvider extends AdminHtmlRouteProvider {
    * @return \Symfony\Component\Routing\Route|null
    *   The generated route, if available.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   protected function getRevisionRoute(EntityTypeInterface $entity_type) {
     if ($entity_type->hasLinkTemplate('revision')) {
@@ -102,7 +110,9 @@ class ShorthandStoryHtmlRouteProvider extends AdminHtmlRouteProvider {
    * @return \Symfony\Component\Routing\Route|null
    *   The generated route, if available.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   protected function getSettingsFormRoute(EntityTypeInterface $entity_type) {
     if (!$entity_type->getBundleEntityType()) {

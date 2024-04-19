@@ -9,6 +9,7 @@ stories on a Drupal website.
 
 - [Install Drupal module](https://www.drupal.org/docs/extending-drupal/installing-modules).
 
+<<<<<<< HEAD
 ## Configuration (version 4)
 
 - Login to [shorthand account](https://shorthand.com/signin)
@@ -50,3 +51,7 @@ If metatags are overriden on the entity (node, user, taxonomy),
 the story metatag will be discarded.
 
 If there are multiple stories, only first stiry metatags will be used.
+=======
+You may customise the provided `html--shorthand-story.tpl.php` and 
+`node--shorthand-story-node.tpl.php` template files
+>>>>>>> af4ee81e46786a373809643d6b45694ce2f4d1eb

@@ -14,8 +14,10 @@ use Psr\Log\LoggerInterface;
 /**
  * Class for Shorthand's API handling (Versioning to be deprecated).
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
- *   ShorthandApi class.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * Use ShorthandApi class.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandApiV2 implements ShorthandApiInterface {
 
@@ -79,7 +81,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi class.
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::__construct()
    */
   public function __construct(Client $http_client, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger, ConfigFactoryInterface $config_factory) {
     $this->config = $config_factory;
@@ -96,7 +97,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getProfile().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getProfile()
    */
   public function getProfile() {
     // @todo Implement getProfile() method.
@@ -109,7 +109,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getPublishingConfigurations().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getPublishingConfigurations()
    */
   public function getPublishingConfigurations() {
 
@@ -157,7 +156,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getBaseUri().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getBaseUri()
    */
   protected function getBaseUri() {
     return self::SHORTHAND_API_URL;
@@ -173,7 +171,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:buildHeaders().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::buildHeaders()
    */
   protected function buildHeaders($token = NULL) {
     $config = $this->config->get('shorthand.settings');
@@ -191,7 +188,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getStories().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getStories()
    */
   public function getStories() {
 
@@ -242,7 +238,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getStory().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getStory()
    */
   public function getStory($id, $params) {
 
@@ -275,7 +270,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:getStoryFileTempPath().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::getStoryFileTempPath()
    */
   protected function getStoryFileTempPath() {
     return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
@@ -288,7 +282,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:publishAssets().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::publishAssets()
    */
   public function publishAssets($id, $config) {
     $request = NULL;
@@ -319,7 +312,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:buildBody().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::buildBody()
    */
   protected function buildBody($config) {
     return [
@@ -336,7 +328,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *   ShorthandApi:validateApiKey().
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
-   * @see Drupal\shorthand\ShorthandApiInterface::validateApiKey()
    */
   public function validateApiKey($token) {
     try {

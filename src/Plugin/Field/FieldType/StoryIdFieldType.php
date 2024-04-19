@@ -20,14 +20,18 @@ use Drupal\Core\TypedData\DataDefinition;
  *   default_widget = "shorthand_story_select"
  * )
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class StoryIdFieldType extends FieldItemBase {
 
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function defaultStorageSettings() {
     return [
@@ -40,7 +44,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     // Prevent early t() calls by using the TranslatableMarkup.
@@ -55,7 +61,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     $schema = [
@@ -74,7 +82,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getConstraints() {
     $constraints = parent::getConstraints();
@@ -100,7 +110,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
     $random = new Random();
@@ -111,7 +123,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function storageSettingsForm(array &$form, FormStateInterface $form_state, $has_data) {
     $elements = [];
@@ -132,7 +146,9 @@ class StoryIdFieldType extends FieldItemBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function isEmpty() {
     $value = $this->get('value')->getValue();

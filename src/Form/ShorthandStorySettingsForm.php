@@ -15,7 +15,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Configure shorthand settings for this site.
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStorySettingsForm extends ConfigFormBase {
 
@@ -61,7 +63,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger interface.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $currentUser, ModuleHandlerInterface $moduleHandler, ShorthandApiInterface $shorthandApi, MessengerInterface $messenger) {
     parent::__construct($config_factory);
@@ -74,7 +78,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -97,7 +103,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   protected function getEditableConfigNames() {
     return ['shorthand.settings'];
@@ -106,7 +114,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $error = $this->t('This is depricated configuration page which will be remopved in version 5.0. Use new <a href=":url">configuration page</a>.', [
@@ -156,7 +166,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // $isValid = \Drupal::service($apiservice)->validateApiKey($form_state->getValue('shorthand_token'));
@@ -169,7 +181,9 @@ class ShorthandStorySettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('shorthand.settings');

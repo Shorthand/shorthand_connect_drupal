@@ -6,7 +6,10 @@
  *
  * Page callback for Shorthand stories entities.
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ *   shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 
 use Drupal\Core\Render\Element;
@@ -21,7 +24,10 @@ use Drupal\Core\Render\Element;
  *   - elements: An associative array containing the user information and any
  *   - attributes: HTML attributes for the containing element.
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ * specific theme hook for the field with type shorthand.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 function template_preprocess_shorthand_story(array &$variables) {
   // Helpful $content variable for templates.

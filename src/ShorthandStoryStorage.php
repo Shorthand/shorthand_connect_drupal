@@ -15,14 +15,20 @@ use Drupal\shorthand\Entity\ShorthandStoryInterface;
  *
  * @ingroup shorthand
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ *   shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStoryStorage extends SqlContentEntityStorage implements ShorthandStoryStorageInterface {
 
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function revisionIds(ShorthandStoryInterface $entity) {
     return $this->database->query(
@@ -34,7 +40,10 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function userRevisionIds(AccountInterface $account) {
     return $this->database->query(
@@ -46,7 +55,10 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function countDefaultLanguageRevisions(ShorthandStoryInterface $entity) {
     return $this->database->query('SELECT COUNT(*) FROM {shorthand_story_field_revision} WHERE id = :id AND default_langcode = 1', [':id' => $entity->id()])
@@ -56,7 +68,10 @@ class ShorthandStoryStorage extends SqlContentEntityStorage implements Shorthand
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function clearRevisionsLanguage(LanguageInterface $language) {
     return $this->database->update('shorthand_story_revision')

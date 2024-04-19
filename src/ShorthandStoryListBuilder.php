@@ -11,14 +11,18 @@ use Drupal\Core\Link;
  *
  * @ingroup shorthand
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStoryListBuilder extends EntityListBuilder {
 
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function buildHeader() {
     $header['id'] = $this->t('Shorthand story ID');
@@ -29,7 +33,9 @@ class ShorthandStoryListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function buildRow(EntityInterface $entity) {
     /** @var \Drupal\shorthand\Entity\ShorthandStory $entity */

@@ -18,6 +18,11 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class RemoteCollectionController extends ControllerBase {
 
   /**
+   * Defines shorthand stories container base path.
+   */
+  const SHORTHAND_STORY_BASE_PATH = 'shorthand/stories';
+
+  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountInterface
@@ -51,11 +56,6 @@ class RemoteCollectionController extends ControllerBase {
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
-
-  /**
-   * Defines shorthand stories container base path.
-   */
-  const SHORTHAND_STORY_BASE_PATH = 'shorthand/stories';
 
   /**
    * The constructor method.
@@ -94,6 +94,68 @@ class RemoteCollectionController extends ControllerBase {
   }
 
   /**
+   * Download shorthand stories.
+   *
+   * @param array $sids
+   *   List of shorthand stories IDs.
+   * @param array $context
+   *   Batch content configuration.
+   */
+  public static function downloadStoryBatch(array $sids, array &$context) {
+    $message = 'Downloading story...';
+    $apiServiceName = 'shorthand_api';
+    $apiService = \Drupal::service($apiServiceName);
+
+    $results = [];
+    $stories = [];
+    $storiesApi = $apiService->getStories();
+    foreach ($storiesApi as $storyApi) {
+      $stories[$storyApi['id']] = $storyApi['updated'];
+    }
+
+    foreach ($sids as $sid) {
+      $file = $apiService->getStory($sid, []);
+      $file_system = \Drupal::service('file_system');
+      $filepath = $file_system->realpath($file);
+      $archiver = \Drupal::service('plugin.manager.archiver')
+        ->getInstance(['filepath' => $filepath]);
+
+      // $timestamp = \Drupal::time()->getCurrentTime();
+      $timestamp = $stories[$sid];
+      $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp;
+      $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
+      $destination_path = $file_system->realpath($destination_uri);
+      $result = $archiver->extract($destination_path);
+      $file_system->delete($filepath);
+
+      $results[] = $result;
+    }
+
+    $context['message'] = $message;
+    $context['results'] = $results;
+  }
+
+  /**
+   * Callback to finish batch processing.
+   */
+  public static function downloadStoryComplete($success, $results, $operations) {
+    // The 'success' parameter means no fatal PHP errors were detected. All
+    // other error management should be handled using 'results'.
+    $message = "";
+
+    if ($success) {
+      $message = \Drupal::translation()->formatPlural(
+        count($results), 'One story downloaded.', '@count stories downloaded.'
+      );
+    }
+    else {
+      $message = 'Finished with an error.';
+    }
+
+    \Drupal::messenger()->addStatus($message);
+  }
+
+  /**
    * Returns a simple page.
    *
    * @return array
@@ -126,11 +188,11 @@ class RemoteCollectionController extends ControllerBase {
     ]);
 
     $localStories = array_keys($storyFolders);
-    
+
     $input = [
       '#type' => 'textfield',
       '#id' => 'story_filter',
-      '#placeholder' => $this->t('Filter Stories')
+      '#placeholder' => $this->t('Filter Stories'),
     ];
 
     foreach ($stories as $story) {
@@ -147,7 +209,7 @@ class RemoteCollectionController extends ControllerBase {
         '#title' => $title,
         '#attributes' => [
           'class' => ['shorthand-story-image'],
-        ]
+        ],
       ];
       $story['image'] = $this->renderer->render($image_variables);
 
@@ -199,7 +261,7 @@ class RemoteCollectionController extends ControllerBase {
     ];
 
     return [
-      'type' => 'page',
+      '#type' => 'page',
       'content' => [
         'filter_input' => $input,
         'story_list' => [
@@ -210,8 +272,7 @@ class RemoteCollectionController extends ControllerBase {
             'class' => ['shorthand-story-list'],
           ],
           '#header_columns' => 4,
-        ]
-        
+        ],
       ],
       '#attached' => [
         'library' => [
@@ -219,66 +280,6 @@ class RemoteCollectionController extends ControllerBase {
         ],
       ],
     ];
-  }
-
-  /**
-   * Download shorthand stories.
-   *
-   * @param array $sids
-   *   List of shorthand stories IDs.
-   * @param array $context
-   *   Batch content configuration.
-   */
-  public static function downloadStoryBatch(array $sids, array &$context) {
-    $message = 'Downloading story...';
-    $apiService = 'shorthand_api';
-
-    $results = [];
-    $stories = [];
-    $storiesApi = \Drupal::service($apiService)->getStories();
-    foreach ($storiesApi as $storyApi) {
-      $stories[$storyApi['id']] = $storyApi['updated'];
-    }
-
-    foreach ($sids as $sid) {
-      $file = \Drupal::service($apiService)->getStory($sid, []);
-      $file_system = \Drupal::service('file_system');
-      $filepath = $file_system->realpath($file);
-      $archiver = \Drupal::service('plugin.manager.archiver')
-        ->getInstance(['filepath' => $filepath]);
-
-      // $timestamp = \Drupal::time()->getCurrentTime();
-      $timestamp = $stories[$sid];
-      $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp;
-      $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
-      $destination_path = $file_system->realpath($destination_uri);
-      $result = $archiver->extract($destination_path);
-
-      $results[] = $result;
-    }
-
-    $context['message'] = $message;
-    $context['results'] = $results;
-  }
-
-  /**
-   * Callback to finish batch processing.
-   */
-  public static function downloadStoryComplete($success, $results, $operations) {
-    // The 'success' parameter means no fatal PHP errors were detected. All
-    // other error management should be handled using 'results'.
-    $message = "";
-
-    if ($success) {
-      $message = \Drupal::translation()->formatPlural(
-        count($results), 'One story downloaded.', '@count stories downloaded.'
-      );
-    }
-    else {
-      $message = 'Finished with an error.';
-    }
-
-    \Drupal::messenger()->addStatus($message);
   }
 
   /**

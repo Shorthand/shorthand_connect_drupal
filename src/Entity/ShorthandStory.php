@@ -2,12 +2,12 @@
 
 namespace Drupal\shorthand\Entity;
 
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Entity\RevisionableContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\RevisionableContentEntityBase;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\user\UserInterface;
 
 /**
@@ -58,7 +58,9 @@ use Drupal\user\UserInterface;
  *   field_ui_base_route = "shorthand_story.settings"
  * )
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStory extends RevisionableContentEntityBase implements ShorthandStoryInterface {
 
@@ -67,14 +69,18 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * Defines shorthand's stories container base path.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   const SHORTHAND_STORY_BASE_PATH = 'shorthand/stories';
 
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function preCreate(EntityStorageInterface $storage_controller, array &$values) {
     parent::preCreate($storage_controller, $values);
@@ -86,7 +92,9 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function preSave(EntityStorageInterface $storage) {
 
@@ -118,6 +126,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
 
     $destination_path = $file_system->realpath($destination_uri);
     $archiver->extract($destination_path);
+    $file_system->delete($filepath);
 
     // Store head and body, handling text in any language.
     $head = mb_convert_encoding(
@@ -176,7 +185,9 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getShorthandStoryId() {
     return $this->get('shorthand_id')->value;
@@ -185,7 +196,9 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getExternalAssetsFlag() {
     return $this->get('external_assets')->value == 1;
@@ -194,7 +207,9 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function getExternalPublishingConfiguration() {
     return json_decode($this->get('external_publishing_config')->value);

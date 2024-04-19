@@ -17,7 +17,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  *  Returns responses for Shorthand story routes.
  *
- * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStoryController extends ControllerBase implements ContainerInjectionInterface {
 
@@ -52,7 +54,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer, EntityTypeManagerInterface $entity_type_manager) {
     $this->dateFormatter = $date_formatter;
@@ -63,7 +67,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
   /**
    * {@inheritdoc}
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -82,7 +88,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    * @return array
    *   An array suitable for drupal_render().
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function revisionShow($shorthand_story_revision) {
     $shorthand_story = $this->entityTypeManager
@@ -103,7 +111,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    * @return string
    *   The page title.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function revisionPageTitle($shorthand_story_revision) {
     $shorthand_story = $this->entityTypeManager
@@ -127,7 +137,9 @@ class ShorthandStoryController extends ControllerBase implements ContainerInject
    * @return array
    *   An array as expected by drupal_render().
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
   public function revisionOverview(ShorthandStoryInterface $shorthand_story) {
     $account = $this->currentUser();

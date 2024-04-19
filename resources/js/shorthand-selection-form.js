@@ -26,7 +26,8 @@ const story_title_field = document.querySelector("input[id^=edit-title-]");
 
 const options = [...story_select_field.options]
   .reduce((a, option) => {
-    if (option.value == 0) return a;
+    if (option.value == 0) { return a;
+    }
     const story_id = option.value.split("/")[0];
     const version = option.value.split("/")[1];
     a.push([story_id, version]);
@@ -70,9 +71,7 @@ for (let key of Object.keys(visual_options)) {
     visual_option.title +
     "</h3><p>" +
     visual_option.metadata.description +
-    "</p>" +
-    "<div class='story-versions' id='versions-" +
-    visual_option.id +
+    "</p><div class='story-versions' id='versions-" + visual_option.id +
     "'><span>Versions</span></div>";
   ("</div>");
 

@@ -146,8 +146,6 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
     catch (ConnectException $error) {
     }
 
-    
-
     foreach (array_keys($storyFolders) as $story_id) {
       $storyVersionFolders = $this->fileSystem->scanDirectory($destination_uri . '/' . $story_id, '/.*/', [
         'recurse' => FALSE,
@@ -156,7 +154,7 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
 
       foreach (array_keys($storyVersionFolders) as $version_id) {
         $options[$story_id . '/' . $version_id] =
-          $stories[$story_id]['title'] .' @ '. $version_id  ?? ($story_id . '/' . $version_id);
+          $stories[$story_id]['title'] . ' @ ' . $version_id ?? ($story_id . '/' . $version_id);
         array_push($stories[$story_id]['versions'], $version_id);
       }
     }
@@ -181,7 +179,7 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
         '#title' => $title,
         '#attributes' => [
           'class' => ['shorthand-story-image'],
-        ]
+        ],
       ];
       $story['image_tag'] = $this->renderer->render($image_variables);
 
@@ -190,7 +188,7 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
         '#attributes' => [
           'class' => ['shorthand-story'],
           'data-storyid' => $story['id'],
-          'data-storyoption' => $story['id']."/".$story['versions'][0],
+          'data-storyoption' => $story['id'] . "/" . $story['versions'][0],
           'data-storytitle' => $story['title'],
           'data-storystatus' => $story['status'],
         ],
@@ -199,12 +197,12 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
             '#markup' => $story['image_tag'],
           ],
           'story_title' => [
-            '#markup' => '<span>'.$story['title'].'</span>',
+            '#markup' => '<span>' . $story['title'] . '</span>',
           ],
         ],
       ];
     }
-    
+
     return $options;
   }
 

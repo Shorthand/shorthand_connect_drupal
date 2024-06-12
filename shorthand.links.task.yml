@@ -1,0 +1,27 @@
+# Shorthand story routing definition
+shorthand_story.settings_tab:
+  route_name: shorthand_story.settings
+  title: 'Settings'
+  base_route: shorthand_story.settings
+
+entity.shorthand_story.collection:
+  title: 'Shorthand (deprecated)'
+  route_name: entity.shorthand_story.collection
+  base_route: system.admin_content
+  weight: 100
+
+entity.shorthand_story.canonical:
+  route_name: entity.shorthand_story.canonical
+  base_route: entity.shorthand_story.canonical
+  title: 'View'
+
+entity.shorthand_story.version_history:
+  route_name: entity.shorthand_story.version_history
+  base_route: entity.shorthand_story.canonical
+  title: 'Revisions'
+
+shorthand.remote_collection:
+  title: Shorthand
+  route_name: shorthand.remote_collection
+  base_route: system.admin_content
+  weight: 50

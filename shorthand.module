@@ -2,286 +2,206 @@
 
 /**
  * @file
- * Connects with Shorthand and allows publishing stories to Drupal site.
+ * Contains shorthand.module.
  */
 
-require_once 'includes/api.php';
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\shorthand\Controller\RemoteCollectionController;
+use Drupal\shorthand\Entity\ShorthandStoryInterface;
 
 /**
  * Implements hook_help().
  */
-function shorthand_help($path, $arg) {
+function shorthand_help($route_name, RouteMatchInterface $route_match) {
   $output = '';
-  switch ($path) {
-    case "admin/help#shorthand":
-      $output .= '<p>' . t("A module that allows the publishing of Shorthand stories directly to Drupal.") . '</p>';
-      break;
+  // Help for the shorthand module.
+  if ($route_name == 'help.page.shorthand') {
+    $output .= '<h3>' . t('About') . '</h3>';
+    $output .= '<p>' . t('A module that allows the publishing of Shorthand stories directly to Drupal entities.') . '</p><ul>';
+    $output .= '<li>' . t('Login to <em>shorthand account</em> and <em>generate API key</em> (links are in README.md file).') . '</li>';
+    $output .= '<li>' . t('Visit configuration page at <em>/admin/config/services/shorthand</em> to set API key and other settings.') . '</li>';
+    $output .= '<li>' . t('Download remote stories locally at <em>/admin/content/shorthand</em>.') . '</li>';
+    $output .= '<li>' . t('Add <em>Shorthand select</em> field (`Reference` field category) to desired entity (content type, taxonomy term, user, ...). Note that <em>Shorthand Story ID</em> field (`General` field category) was deprecated and will be removed in version 5.') . '</li>';
+    $output .= '<li>' . t('When managing entity with Shorthand field, select one of the
+downloaded stories.') . '</li>';
+    $output .= '</ul>';
   }
+
   return $output;
 }
 
 /**
- * Implements hook_menu().
- */
-function shorthand_menu() {
-  $items = array();
-  $items['admin/config/services/shorthand'] = array(
-    'title' => 'Shorthand Connect settings',
-    'description' => 'Configure Shorthand integration for story publishing',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('shorthand_admin_settings'),
-    'access arguments' => array('access administration pages'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'shorthand.admin.inc',
-  );
-  return $items;
-}
-
-/**
- * Implements hook_menu_alter().
- */
-function shorthand_menu_alter(&$items) {
-  $items['node/add/shorthand-story']['access callback'] = 'shorthand_account_check';
-}
-
-/**
- * Prevent addition of Shorthand nodes without account details.
- */
-function shorthand_account_check() {
-  $shorthand_user_id = variable_get('shorthand_user_id', '');
-  $shorthand_token = variable_get('shorthand_token', '');
-  if (empty($shorthand_user_id) || empty($shorthand_token)) {
-    $message = t('No Shorthand account details found. Please go to the <a href="@page">Shorthand Connect settings page</a>.', array('@page' => url('admin/config/services/shorthand')));
-    drupal_get_messages();
-    drupal_set_message($message, 'warning');
-    return FALSE;
-  }
-  return TRUE;
-}
-
-/**
- * Implements hook_field_widget_info().
- */
-function shorthand_field_widget_info() {
-  return array(
-    'shorthand_story_select' => array(
-      'label' => 'Shorthand stories selection',
-      'field types' => array('text'),
-      'settings' => array(
-        'size' => '60',
-      ),
-      'behaviors' => array(
-        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
-      ),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_widget_form().
- */
-function shorthand_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-
-  $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : '';
-  $widget = $element;
-  $widget['#delta'] = $delta;
-
-  switch ($instance['widget']['type']) {
-    case 'shorthand_story_select':
-      $data['serverURL'] = variable_get('shorthand_server_url', 'https://app.shorthand.com');
-      $data['stories'] = sh_get_stories();
-
-      drupal_add_js('var shStoryData=' . json_encode($data) . ';', 'inline');
-
-      $widget += array(
-        '#type' => 'textfield',
-        '#default_value' => $value,
-        '#size' => 10,
-        '#maxlength' => 10,
-        '#attached' => array(
-          'css' => array(drupal_get_path('module', 'shorthand') . '/field_widget_form.css'),
-          'js' => array(drupal_get_path('module', 'shorthand') . '/field_widget_form.js'),
-        ),
-      );
-      break;
-  }
-  $element['value'] = $widget;
-  return $element;
-}
-
-/**
- * Implements hook_node_insert().
- */
-function shorthand_node_insert($node) {
-  update_node_data($node);
-}
-
-/**
- * Implements hook_node_update().
- */
-function shorthand_node_update($node) {
-  update_node_data($node);
-}
-
-/**
- * Create or update shorthand story node.
+ * Implements hook_preprocess_HOOK().
  *
- * @param object $node
- *   The newly-created or existing node.
- */
-function update_node_data($node) {
-  if (isset($node->shorthand_story_id)) {
-    $node->original = isset($node->original) ? $node->original : NULL;
-
-    $story = sh_copy_story($node->nid, $node->shorthand_story_id[LANGUAGE_NONE][0]['value']);
-
-    // Handle texts in other languages.
-    $opts = array('http' => array('header' => 'Accept-Charset: UTF-8, *;q=0'));
-    $context = stream_context_create($opts);
-
-    $head = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_head.html', FALSE, $context));
-    // Allow modules to implement hook_shorthand_story_head_alter.
-    drupal_alter('shorthand_story_head', $head, $node->nid);
-    $node->shorthand_story_head[LANGUAGE_NONE][0]['value'] = $head;
-    $node->shorthand_story_head[LANGUAGE_NONE][0]['format'] = 'full_html';
-
-    $body = _shorthand_fix_content_paths($story['url'], file_get_contents($story['path'] . '/component_article.html', FALSE, $context));
-    // Allow modules to implement hook_shorthand_story_body_alter.
-    drupal_alter('shorthand_story_body', $body, $node->nid);
-    $node->shorthand_story_body[LANGUAGE_NONE][0]['value'] = $body;
-    $node->shorthand_story_body[LANGUAGE_NONE][0]['format'] = 'full_html';
-
-    field_attach_update('node', $node);
-  }
-}
-
-/**
- * Implements hook_node_delete().
- */
-function shorthand_node_delete($node) {
-  $story_path = drupal_realpath('public://') . 'shorthand/' . $node->nid . '/' . $node->shorthand_story_id[LANGUAGE_NONE][0]['value'];
-  if (file_exists($story_path)) {
-    file_unmanaged_delete_recursive($story_path);
-  }
-}
-
-/**
- * Helper function to fix paths in the shorthand story.
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ * THEME_preprocess_html in your theme.
  *
- * @param string $assets_path
- *   The correct path in Drupal.
- * @param string $content
- *   The Shorthand story.
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
+ */
+function shorthand_preprocess_html(&$variables) {
+  if (
+    ($story = \Drupal::routeMatch()->getParameter('shorthand_story')) &&
+    ($story instanceof ShorthandStoryInterface)
+  ) {
+    $files_url = \Drupal::service('file_url_generator')
+      ->generateAbsoluteString($story->getShorthandStoryFilesStorageUri());
+    $node_url = $story->toUrl()->setAbsolute()->toString();
+    $html_head = $story->get('head')->value;
+    if (strpos($html_head, 'amphtml') !== FALSE) {
+
+      // Replace AMP url if present.
+      $amp_url = $files_url;
+      $amp_url .= '/amp-index.html';
+      $new_amp_link = "<link rel=\"amphtml\" href=\"$amp_url\">";
+      $html_head = preg_replace('/<link.*rel="amphtml"(.[^>]*>)/i', $new_amp_link, $html_head);
+    }
+
+    if (strpos($html_head, 'og:url') !== FALSE) {
+      // Replace og:url url if present.
+      $new_og_url = "<meta property=\"og:url\" content=\"$node_url\">";
+      $html_head = preg_replace('/<meta.*property="og:url"(.[^>]*>)/i', $new_og_url, $html_head);
+    }
+
+    if (strpos($html_head, 'og:image') !== FALSE) {
+      // Replace og:image url if present.
+      $new_og_image = '<meta property="og:image" content="' . $files_url . '/assets';
+      $html_head = preg_replace('/<meta.*property="og:image".*assets/i', $new_og_image, $html_head);
+    }
+
+    if (strpos($html_head, 'twitter:image') !== FALSE) {
+      // Replace twitter:image url if present.
+      $new_twitter_image = '<meta name="twitter:image" content="' . $files_url . '/assets';
+      $html_head = preg_replace('/<meta.*name="twitter:image".*assets/i', $new_twitter_image, $html_head);
+    }
+
+    $variables['#attached']['html_head'][] = [
+      [
+        '#type' => 'markup',
+        '#markup' => Markup::create($html_head),
+        '#cache' => [
+          'contexts' => ['url.path'],
+          'tags' => $story->getCacheTags(),
+        ],
+      ],
+      'shorthand_story_head',
+    ];
+  }
+}
+
+/**
+ * Implements hook_theme().
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+ * specific theme hook for the field type shorthand.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
+ */
+function shorthand_theme() {
+  return [
+    'shorthand_story' => [
+      'render element' => 'elements',
+      'file' => 'shorthand.page.inc',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_metatags_alter().
+ */
+function shorthand_metatags_alter(array &$metatags, array &$context) {
+  if (!\Drupal::moduleHandler()->moduleExists('metatag')) {
+    return;
+  }
+
+  // Ignore some system routes that are not appropriate for meta tags.
+  if (metatag_is_current_route_supported()
+    && $context['entity']
+    && $context['entity'] instanceof FieldableEntityInterface) {
+    // Detect shorthand field.
+    foreach ($context['entity']->getFieldDefinitions() as $name => $definition) {
+
+      if (($definition->getType() === 'shorthand_local') &&
+        ($path = $context['entity']->$name->value)
+      ) {
+        // Parse metatags.
+        $filePathHead = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/head.html';
+
+        if (!file_exists($filePathHead)) {
+          continue;
+        }
+
+        $metas = strip_tags(file_get_contents($filePathHead), '<meta>');
+
+        $doc = new DOMDocument();
+        $doc->loadHTML($metas);
+        $xpath = new DOMXPath($doc);
+        foreach ($xpath->query('//meta') as $node) {
+          $attributes = [];
+          if ($node->attributes) {
+            for ($index = 0; $index < $node->attributes->length; $index++) {
+              $attribute = $node->attributes->item($index);
+              $attributes[$attribute->name] = $attribute->value;
+            }
+
+            // Make sure tag is not set in Drupal.
+            if (in_array('content', array_keys($attributes)) &&
+              (in_array('property', array_keys($attributes)) ||
+                in_array('name', array_keys($attributes)))) {
+              $metaname = str_replace('og:', 'og_',
+                str_replace('twitter:', 'twitter_cards_',
+                  $attributes['property'] ?? $attributes['name']));
+              if (!in_array($metaname, array_merge(array_keys($metatags), [
+                'generator',
+              ]))) {
+                $metatags[$metaname] = $attributes['content'];
+              }
+
+              // Modify image tokens.
+              if (in_array($metaname,
+                  [
+                    'twitter_cards_image',
+                    'og_image',
+                  ]
+                ) && strlen($attributes['content'])) {
+                $content = explode('/assets/', $attributes['content']);
+                if (is_array($content) && count($content) > 1) {
+                  $metatags[$metaname] = \Drupal::service('file_url_generator')
+                    ->generateAbsoluteString('public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/assets/' . $content[1]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Check permission to create new SH.
+ *
+ * @return bool
+ *   TRUE if user has access.
+ */
+function _shorthand_check_node_permission() {
+  return user_access('administer nodes') || user_access('create shorthand_story content');
+}
+
+/**
+ * Get token depending on the currently set version.
  *
  * @return string
- *   The story.
+ *   Token for selected version.
  */
-function _shorthand_fix_content_paths($assets_path, $content) {
-  $content = str_replace('./static/', $assets_path . '/static/', $content);
-  $content = str_replace('./media/', $assets_path . '/media/', $content);
-  return $content;
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function shorthand_preprocess_page(&$variables) {
-  if (isset($variables['node']->type)) {
-    $variables['theme_hook_suggestions'][] = 'page__' . $variables['node']->type;
-  }
-}
-
-/**
- * Implements hook_preprocess_html().
- */
-function shorthand_preprocess_html(&$vars) {
-  $node = menu_get_object();
-  if ($node && $node->type == 'shorthand_story' && $node->nid) {
-    drupal_add_css(drupal_get_path('module', 'shorthand') . '/shorthand.css', array(
-      'group' => CSS_THEME,
-      'weight' => 1000,
-    ));
-
-    if (!empty($node->shorthand_story_head[LANGUAGE_NONE][0]['value'])) {
-      $vars['shorthand_story_head'] = $node->shorthand_story_head[LANGUAGE_NONE][0]['value'];
+function _shorthand_get_token() {
+  $token = &drupal_static(__FUNCTION__);
+  if (!isset($token)) {
+    $version = variable_get('shorthand_version', 'v2');
+    if ($version == 'v2') {
+      $token = variable_get('shorthand_token_v2', '');
     }
-
-    $vars['theme_hook_suggestions'][] = 'html__' . $node->type;
   }
-}
-
-/**
- * Implements hook_preprocess_node().
- */
-function shorthand_preprocess_node(&$vars) {
-  if ($vars['type'] == 'shorthand_story') {
-    $vars['story_id'] = $vars['shorthand_story_id'][0]['value'];
-    $vars['story_body'] = $vars['shorthand_story_body'][0]['value'];
-    $vars['story_extra_html'] = !empty($vars['shorthand_story_extra_html']) ? $vars['shorthand_story_extra_html'][0]['value'] : "";
-  }
-}
-
-/**
- * Unzip the Shorthand archive.
- *
- * @param string $file
- *   The zip file path.
- * @param string $directory
- *   The path to the directory to unzip the archive.
- *
- * @return \ArchiverZip|\ZipArchive
- *   Either ArchiverZip from Drupal or PHP ZipArchive.
- *
- * @throws \Exception
- */
-function shorthand_archive_extract($file, $directory) {
-  if (class_exists('ZipArchive', FALSE)) {
-    $archiver = new ZipArchive();
-
-    if (!$archiver->open($file)) {
-      throw new Exception(t('Cannot extract %file, not a valid zip archive.', array('%file' => $file)));
-    }
-
-    if (file_exists($directory)) {
-      file_unmanaged_delete_recursive($directory);
-    }
-
-    $archiver->extractTo($directory);
-    $archiver->close();
-
-    return $archiver;
-  }
-
-  // If ZipArchive is not available try Drupal.
-  return _shorthand_unzip_file($file, $directory);
-}
-
-/**
- * Unzip the archive with Drupal implementation of extracting archives.
- *
- * @param string $file
- *   The zip file path.
- * @param string $directory
- *   The path to the directory to unzip the archive.
- *
- * @return \ArchiverZip
- *   ArchiverZip from Drupal
- *
- * @throws \Exception
- */
-function _shorthand_unzip_file($file, $directory) {
-  module_load_include('inc', 'system', 'system.archiver');
-
-  $archiver = new ArchiverZip($file);
-  if (!$archiver) {
-    throw new Exception(t('Cannot extract %file, not a valid zip archive.', array('%file' => $file)));
-  }
-
-  if (file_exists($directory)) {
-    file_unmanaged_delete_recursive($directory);
-  }
-
-  $archiver->extract($directory);
-
-  return $archiver;
+  return $token;
 }

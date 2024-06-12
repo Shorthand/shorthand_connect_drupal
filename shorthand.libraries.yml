@@ -1,0 +1,12 @@
+shorthandForm:
+  js:
+    resources/js/shorthand-form.js: {}
+  css:
+    component:
+      resources/css/shorthand-form.css: {}
+shorthandSelectionForm:
+  js:
+    resources/js/shorthand-selection-form.js: {}
+  css:
+    component:
+      resources/css/shorthand-selection-form.css: {}

@@ -1,0 +1,39 @@
+{
+  "name": "drupal/shorthand",
+  "type": "drupal-module",
+  "description": "A module that allows the publishing of Shorthand stories directly to Drupal.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/shorthand",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/shorthand",
+    "source": "http://cgit.drupalcode.org/shorthand"
+  },
+  "require": { },
+  "require-dev": {
+    "drupal/metatag": "2.0.x"
+  },
+  "authors": [
+    {
+      "name": "Andrew Dekker (simultech)",
+      "homepage": "https://www.drupal.org/u/simultech",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Deji Akala (dejiakala)",
+      "homepage": "https://www.drupal.org/u/dejiakala",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Ben Hoad (benhoad)",
+      "homepage": "https://www.drupal.org/u/benhoad",
+      "role": "Maintainer"
+    },
+    {
+      "name": "Vladimir Roudakov (vladimiraus)",
+      "homepage": "https://www.drupal.org/u/vladimiraus",
+      "role": "Maintainer"
+    }
+  ]
+}

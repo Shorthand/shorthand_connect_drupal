@@ -1,0 +1,21 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.shorthand_story.field_shorthand_story
+    - node.type.shorthand_story
+  module:
+    - user
+id: node.shorthand_story.teaser
+targetEntityType: node
+bundle: shorthand_story
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_shorthand_story: true

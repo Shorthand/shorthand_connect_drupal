@@ -24,6 +24,12 @@ use Drupal\user\UserInterface;
  *     "list_builder" = "Drupal\shorthand\ShorthandStoryListBuilder",
  *     "views_data" = "Drupal\shorthand\Entity\ShorthandStoryViewsData",
  *     "translation" = "Drupal\shorthand\ShorthandStoryTranslationHandler",
+ *     "form" = {
+ *       "default" = "Drupal\shorthand\Form\ShorthandStoryForm",
+ *       "add" = "Drupal\shorthand\Form\ShorthandStoryForm",
+ *       "edit" = "Drupal\shorthand\Form\ShorthandStoryForm", 
+ *       "delete" = "Drupal\shorthand\Form\ShorthandStoryDeleteForm",
+ *     },
  *     "access" = "Drupal\shorthand\ShorthandStoryAccessControlHandler",
  *     "route_provider" = {
  *       "html" = "Drupal\shorthand\ShorthandStoryHtmlRouteProvider",
@@ -50,6 +56,8 @@ use Drupal\user\UserInterface;
  *     "revision_log_message" = "revision_log_message",
  *   },
  *   links = {
+ *     "edit-form" = "/admin/content/shorthand-story/{shorthand_story}/edit",
+ *     "delete-form" = "/admin/content/shorthand-story/{shorthand_story}/delete",
  *     "canonical" = "/shorthand-story/{shorthand_story}",
  *     "version-history" = "/admin/content/shorthand-story/{shorthand_story}/revisions",
  *     "revision" = "/admin/content/shorthand-story/{shorthand_story}/revisions/{shorthand_story_revision}/view",
@@ -60,6 +68,7 @@ use Drupal\user\UserInterface;
  *
  * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
  *
+ * 
  * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStory extends RevisionableContentEntityBase implements ShorthandStoryInterface {

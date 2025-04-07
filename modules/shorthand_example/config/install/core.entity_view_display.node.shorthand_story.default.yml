@@ -1,0 +1,27 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.shorthand_story.field_shorthand_story
+    - node.type.shorthand_story
+  module:
+    - shorthand
+    - user
+id: node.shorthand_story.default
+targetEntityType: node
+bundle: shorthand_story
+mode: default
+content:
+  field_shorthand_story:
+    type: shorthand_local_story_render
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden: {  }

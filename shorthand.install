@@ -2,195 +2,230 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the Shorthand module.
+ * Shorthand module .install file.
  */
 
-/**
- * Implements hook_install().
- */
-function shorthand_install() {
-  variable_set('shorthand_server_url', 'https://app.shorthand.com');
-
-  $t = get_t();
-
-  $type = array(
-    'type' => 'shorthand_story',
-    'name' => $t('Shorthand Story'),
-    'base' => 'node_content',
-    'description' => $t('Use stories from your Shorthand Account, directly in Drupal.'),
-    'custom' => 0,
-    'modified' => 1,
-    'locked' => 0,
-  );
-
-  $type = node_type_set_defaults($type);
-  node_type_save($type);
-
-  $field_info = field_info_field('shorthand_story_id');
-  $field_instance = field_info_instance('node', 'shorthand_story_id', 'shorthand_story');
-  if (empty($field_info)) {
-    $field = array(
-      'field_name' => 'shorthand_story_id',
-      'type' => 'text',
-      'entity_types' => array('node'),
-      'weight' => 1,
-    );
-    field_create_field($field);
-  }
-
-  if (empty($field_instance)) {
-    $instance = array(
-      'field_name' => 'shorthand_story_id',
-      'entity_type' => 'node',
-      'bundle' => 'shorthand_story',
-      'label' => $t('Shorthand Story'),
-      'widget' => array('type' => 'shorthand_story_select', 'weight' => 1),
-    );
-    field_create_instance($instance);
-  }
-
-  $field_info = field_info_field('shorthand_story_extra_html');
-  $field_instance = field_info_instance('node', 'shorthand_story_extra_html', 'shorthand_story');
-  if (empty($field_info)) {
-    $field = array(
-      'field_name' => 'shorthand_story_extra_html',
-      'type' => 'text',
-      'entity_types' => array('node'),
-      'weight' => 2,
-    );
-    field_create_field($field);
-  }
-
-  if (empty($field_instance)) {
-    $instance = array(
-      'field_name' => 'shorthand_story_extra_html',
-      'entity_type' => 'node',
-      'bundle' => 'shorthand_story',
-      'label' => $t('Shorthand Additional HTML'),
-      'widget' => array('type' => 'text_textarea', 'weight' => 2),
-      'settings' => array('text_processing' => 1),
-    );
-    field_create_instance($instance);
-  }
-
-  $field_info = field_info_field('shorthand_story_head');
-  $field_instance = field_info_instance('node', 'shorthand_story_head', 'shorthand_story');
-  if (empty($field_info)) {
-    $field = array(
-      'field_name' => 'shorthand_story_head',
-      'type' => 'text_long',
-      'entity_types' => array('node'),
-      'weight' => 2,
-    );
-    field_create_field($field);
-  }
-
-  if (empty($field_instance)) {
-    $instance = array(
-      'field_name' => 'shorthand_story_head',
-      'entity_type' => 'node',
-      'bundle' => 'shorthand_story',
-      'label' => $t('Shorthand Story Head'),
-      'widget' => array('type' => 'text_textarea', 'weight' => 2),
-      'settings' => array('text_processing' => 1),
-    );
-    field_create_instance($instance);
-  }
-
-  $field_info = field_info_field('shorthand_story_body');
-  $field_instance = field_info_instance('node', 'shorthand_story_body', 'shorthand_story');
-  if (empty($field_info)) {
-    $field = array(
-      'field_name' => 'shorthand_story_body',
-      'type' => 'text_long',
-      'entity_types' => array('node'),
-      'weight' => 2,
-    );
-    field_create_field($field);
-  }
-
-  if (empty($field_instance)) {
-    $instance = array(
-      'field_name' => 'shorthand_story_body',
-      'entity_type' => 'node',
-      'bundle' => 'shorthand_story',
-      'label' => $t('Shorthand Story Body'),
-      'widget' => array('type' => 'text_textarea', 'weight' => 2),
-      'settings' => array('text_processing' => 1),
-    );
-    field_create_instance($instance);
-  }
-
-  if (module_exists('locale')) {
-    variable_set('language_content_type_shorthand_story', 1);
-  }
-
-  if (module_exists('i18n')) {
-    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
-  }
-}
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\shorthand\Controller\RemoteCollectionController;
 
 /**
- * Implements hook_uninstall().
+ * Uninstall tasks.
  */
 function shorthand_uninstall() {
-  variable_del('shorthand_server_url');
-  variable_del('shorthand_token');
-  variable_del('shorthand_user_id');
+  // Delete config settings.
+  \Drupal::configFactory()
+    ->getEditable('shorthand.settings')
+    ->delete();
 
-  // Delete the content type "shorthand_story" if there are no existing
-  // shorthand_story nodes and no extra fields have been defined for the
-  // shorthand_story node type.
-  $query = new EntityFieldQuery();
-  $results = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'shorthand_story')
-    ->range(0, 1)
-    ->execute();
-
-  $field_instances = field_info_instances('node', 'shorthand_story');
-  unset($field_instances['shorthand_story_id'], $field_instances['shorthand_story_extra_html'], $field_instances['shorthand_story_head'], $field_instances['shorthand_story_body']);
-  if (!$results && !$field_instances) {
-    $fields = array(
-      'shorthand_story_id',
-      'shorthand_story_extra_html',
-      'shorthand_story_head',
-      'shorthand_story_body',
-    );
-    foreach ($fields as $field) {
-      if ($instance = field_info_instance('node', $field, 'shorthand_story')) {
-        // Delete field instance.
-        field_delete_instance($instance);
-        // Delete field.
-        field_delete_field($field);
-      }
-    }
-    // Delete content type.
-    node_type_delete('shorthand_story');
-    // Flush caches.
-    drupal_flush_all_caches();
-  }
+  // Existing stories deletion is already handled by the module uninstaller, so
+  // remove just the files/shorthand folder, if exists.
+  \Drupal::service('file_system')
+    ->deleteRecursive('public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
 }
 
 /**
- * Update field instance info for textareas and support multilingual stories.
+ * Convert settings to config.
  */
-function shorthand_update_7001() {
-  $field_names = array(
-    'shorthand_story_extra_html',
-    'shorthand_story_head',
-    'shorthand_story_body',
-  );
-  foreach ($field_names as $field_name) {
-    $instance_info = field_info_instance('node', $field_name, 'shorthand_story');
-    $instance_info['settings'] = array('text_processing' => 1);
-    field_update_instance($instance_info);
-  }
+function shorthand_8001(&$sandbox) {
+  $settings = \Drupal::service('settings');
+  $config = \Drupal::configFactory()
+    ->getEditable('shorthand.settings');
+  $config
+    ->set('token', $settings->get('shorthand_token'))
+    ->set('version', '2')
+    ->set('input_format', $settings->get('shorthand_input_format'))
+    ->save();
+  return t('Shorthand settings have been migrated from settings.php.');
+}
 
-  if (module_exists('locale')) {
-    variable_set('language_content_type_shorthand_story', 1);
-  }
+/**
+ * Remove Version Dependency and add extra fields.
+ */
+function shorthand_update_8002() {
+  \Drupal::configFactory()
+    ->getEditable('shorthand.settings')
+    ->clear("version")
+    ->save();
 
-  if (module_exists('i18n')) {
-    variable_set('i18n_node_options_shorthand_story', array('current', 'required'));
-  }
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $thumbnail = BaseFieldDefinition::create('string')
+    ->setLabel(t('Thumbnail'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('thumbnail', 'shorthand_story', 'shorthand', $thumbnail);
+
+  $authors = BaseFieldDefinition::create('string')
+    ->setLabel(t('Authors'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('authors', 'shorthand_story', 'shorthand', $authors);
+
+  $keywords = BaseFieldDefinition::create('string')
+    ->setLabel(t('Keywords'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('keywords', 'shorthand_story', 'shorthand', $keywords);
+
+  $description = BaseFieldDefinition::create('string')
+    ->setLabel(t('Description'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 4,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('description', 'shorthand_story', 'shorthand', $description);
+
+  $external_url = BaseFieldDefinition::create('string')
+    ->setLabel(t('Externally Published URL'))
+    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => -4,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 4,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_url);
+
+  return t('Shorthand settings updated.');
+}
+
+/**
+ * Add field for external asset hosting - boolean.
+ */
+function shorthand_update_8003() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $external_assets = BaseFieldDefinition::create('boolean')
+    ->setLabel(t('Use externally hosted assets.'))
+    ->setDescription(t('If true, stories brought into Drupal will use externally hosted assets instead of self-hosting.'))
+    ->setRevisionable(TRUE)
+    ->setTranslatable(TRUE)
+    ->setDisplayOptions('view', [
+      'settings' => [
+        'format' => 'unicode-yes-no',
+      ],
+      'weight' => 1,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'boolean_checkbox',
+      'weight' => 1,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_assets);
+
+  $external_publishing_config = BaseFieldDefinition::create('string')
+    ->setLabel(t('Publishing Configuration'))
+    ->setDescription(t('The publishing configuration to use for assets.'))
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+      'text_processing' => 0,
+    ])
+    ->setDefaultValue('')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'string',
+      'weight' => 1,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string_textfield',
+      'weight' => 1,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition('external_publishing_config', 'shorthand_story', 'shorthand', $external_publishing_config);
+
+}
+
+/**
+ * Move shorthand token to different property.
+ */
+function shorthand_update_9001() {
+  $config = \Drupal::configFactory()
+    ->getEditable('shorthand.settings');
+
+  $config
+    ->set('shorthand_token', $config->get('token'))
+    ->save();
 }

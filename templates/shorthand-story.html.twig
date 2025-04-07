@@ -1,0 +1,27 @@
+{#
+/**
+ * @file shorthand_story.html.twig
+ * Default theme implementation to present Shorthand story data.
+ *
+ * This template is used when viewing Shorthand story pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_shorthand_story()
+ *
+ * @ingroup themeable
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487 Use
+ *   new shorthand field.
+ */
+#}
+<div{{ attributes.addClass('shorthand_story') }}>
+  {% if content %}
+    {{ content }}
+  {% endif %}
+</div>

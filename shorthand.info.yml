@@ -10,6 +10,6 @@ dependencies:
 configure: shorthand.settings_form
 
 # Information added by Drupal.org packaging script on 2025-03-31
-version: '4.0.20'
-project: 'shorthand'
-datestamp: 1743430629
+version: "4.0.21"
+project: "shorthand"
+datestamp: 1744017988

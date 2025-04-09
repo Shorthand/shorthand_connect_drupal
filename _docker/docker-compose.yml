@@ -1,0 +1,36 @@
+  services:
+    # Postgres
+    db:
+      image: postgres:latest
+      restart: always
+      environment:
+        POSTGRES_DB: drupaldb
+        POSTGRES_USER: drupaluser
+        POSTGRES_PASSWORD: drupalpassword
+      volumes:
+        - db_data:/var/lib/postgresql/data
+      ports:
+        - 5432:5432
+    
+    # Drupal
+    cms:
+      image: drupal:latest
+      restart: always
+      ports:
+        - 9191:80
+      volumes:
+        - cms_modules:/var/www/html/modules
+        - cms_profiles:/var/www/html/profiles
+        - cms_themes:/var/www/html/themes
+        - cms_sites:/var/www/html/sites
+        - ..:/var/www/html/modules/custom/shorthand
+      depends_on:
+        - db
+    
+  # Volumes
+  volumes:
+    db_data:
+    cms_modules:
+    cms_profiles:
+    cms_themes:
+    cms_sites:

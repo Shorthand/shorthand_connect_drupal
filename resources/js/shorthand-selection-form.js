@@ -140,10 +140,12 @@ function filterStories(filter) {
     }
   });
 }
-
-storyFilter.addEventListener('keyup', () => {
-  const filter = storyFilter.value;
-  filterStories(filter.toLowerCase());
-});
+if (storyFilter) {
+  storyFilter.addEventListener('keyup', () => {
+    const filter = storyFilter.value;
+    filterStories(filter.toLowerCase());
+  });
+  
+}
 
 updateSelection();

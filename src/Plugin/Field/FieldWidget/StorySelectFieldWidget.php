@@ -88,7 +88,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
       '#type' => 'select',
       '#default_value' => $items[$delta]->value ?? NULL,
       '#options' => $this->buildStoriesList(),
-      '#suffix' => '<div id="shorthand-stories-data">' . json_encode($this->shorthandStories) . '</div>',
+      '#suffix' => '<div id="shorthand-stories-data" hidden>' . json_encode($this->shorthandStories) . '</div>',
     ];
 
     return $element;

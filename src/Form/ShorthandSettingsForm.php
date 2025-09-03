@@ -49,7 +49,7 @@ class ShorthandSettingsForm extends ConfigFormBase {
    *   The current user.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The manages modules.
-   * @param \Drupal\shorthand\ShorthandApiInterface $shorthandApi
+   * @param \Drupal\shorthand\ShorthandApiInterface $shorthand_api
    *   The shorthand api connector.
    */
   public function __construct(

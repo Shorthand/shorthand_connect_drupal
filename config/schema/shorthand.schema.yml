@@ -13,3 +13,6 @@ shorthand.settings:
     shorthand_input_format:
       type: string
       label: 'Text field format'
+    file_stream_wrapper:
+      type: string
+      label: 'File stream wrapper'

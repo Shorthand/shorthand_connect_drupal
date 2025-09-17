@@ -134,13 +134,38 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     $destination_uri = $this->getShorthandStoryFilesStorageUri();
     $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
 
-    $destination_path = $file_system->realpath($destination_uri);
-    $archiver->extract($destination_path);
+    // Extract to a temporary directory, then copy into destination URI to
+    // support non-local stream wrappers (e.g., S3, Azure).
+    $temp_extract_dir_uri = 'temporary://shorthand_extract_entity/' . $this->getShorthandStoryId() . '/' . $this->uuid();
+    $file_system->prepareDirectory($temp_extract_dir_uri, FileSystemInterface::CREATE_DIRECTORY);
+    $temp_extract_dir_real = $file_system->realpath($temp_extract_dir_uri);
+    $archiver->extract($temp_extract_dir_real);
+
+    // Recursively copy extracted files from local temp to destination URI.
+    $iterator = new \RecursiveIteratorIterator(
+      new \RecursiveDirectoryIterator($temp_extract_dir_real, \FilesystemIterator::SKIP_DOTS),
+      \RecursiveIteratorIterator::SELF_FIRST
+    );
+    foreach ($iterator as $item) {
+      $relative_path = ltrim(str_replace($temp_extract_dir_real, '', $item->getPathname()), DIRECTORY_SEPARATOR);
+      $target_uri = rtrim($destination_uri, '/') . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $relative_path);
+      if ($item->isDir()) {
+        $file_system->prepareDirectory($target_uri, FileSystemInterface::CREATE_DIRECTORY);
+      }
+      else {
+        $parent_dir = dirname($target_uri);
+        $file_system->prepareDirectory($parent_dir, FileSystemInterface::CREATE_DIRECTORY);
+        $file_system->copy($item->getPathname(), $target_uri, FileSystemInterface::EXISTS_REPLACE);
+      }
+    }
+
+    // Cleanup temp and local zip.
+    $file_system->deleteRecursive($temp_extract_dir_uri);
     $file_system->delete($filepath);
 
     // Store head and body, handling text in any language.
     $head = mb_convert_encoding(
-      file_get_contents($destination_path . $head_file),
+      file_get_contents($destination_uri . $head_file),
       "HTML-ENTITIES",
       "UTF-8"
     );
@@ -149,7 +174,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     $this->head->format = $input_format;
 
     $body = mb_convert_encoding(
-      file_get_contents($destination_path . $body_file),
+      file_get_contents($destination_uri . $body_file),
       "HTML-ENTITIES",
       "UTF-8"
     );
@@ -490,7 +515,8 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
    *   The URI where shorthand story .zip file has been extracted.
    */
   public function getShorthandStoryFilesStorageUri() {
-    return 'public://' . self::SHORTHAND_STORY_BASE_PATH . '/' . $this->getShorthandStoryId() . '/' . $this->uuid();
+    $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
+    return $stream_wrapper->getStorageUri(self::SHORTHAND_STORY_BASE_PATH . '/' . $this->getShorthandStoryId() . '/' . $this->uuid());
   }
 
   /**

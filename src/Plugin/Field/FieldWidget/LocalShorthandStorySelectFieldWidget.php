@@ -126,8 +126,10 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    */
   protected function buildStoriesList() {
     $options = [0 => $this->t('- Select -')];
-
-    $destination_uri = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH;
+    
+    // Get the stream wrapper service.
+    $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
+    $destination_uri = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
 
     if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
       $this->messenger()->addWarning($this->t('Error accessing shorthand stories folder.'));

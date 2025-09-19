@@ -4,3 +4,4 @@ shorthand_connect/config.php
 /_docker/certificates
 /_docker/logs
 docs/patch-summary.md
+docs/coderabbit-triage.md

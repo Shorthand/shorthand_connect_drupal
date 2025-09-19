@@ -7,10 +7,6 @@ services:
     class: Drupal\shorthand\ShorthandApiV2
     arguments: ['@http_client', '@file_system', '@messenger', '@logger.channel.shorthand', '@config.factory']
 
-  shorthand.stream_wrapper:
-    class: Drupal\shorthand\ShorthandStreamWrapper
-    arguments: ['@config.factory', '@stream_wrapper_manager', '@logger.channel.shorthand']
-
   logger.channel.shorthand:
     parent: logger.channel_base
     arguments: ['shorthand']

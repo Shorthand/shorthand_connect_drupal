@@ -4,12 +4,6 @@ shorthand_story.settings_tab:
   title: 'Settings'
   base_route: shorthand_story.settings
 
-entity.shorthand_story.collection:
-  title: 'Shorthand (deprecated)'
-  route_name: entity.shorthand_story.collection
-  base_route: system.admin_content
-  weight: 100
-
 entity.shorthand_story.canonical:
   route_name: entity.shorthand_story.canonical
   base_route: entity.shorthand_story.canonical

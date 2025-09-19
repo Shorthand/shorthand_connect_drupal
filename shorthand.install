@@ -19,10 +19,8 @@ function shorthand_uninstall() {
 
   // Existing stories deletion is already handled by the module uninstaller, so
   // remove just the files/shorthand folder, if exists.
-  $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
-  $storage_uri = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
   \Drupal::service('file_system')
-    ->deleteRecursive($storage_uri);
+    ->deleteRecursive('public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
 }
 
 /**
@@ -230,21 +228,4 @@ function shorthand_update_9001() {
   $config
     ->set('shorthand_token', $config->get('token'))
     ->save();
-}
-
-/**
- * Add support for configurable stream wrappers (S3FS, Azure, etc.).
- */
-function shorthand_update_9002() {
-  $config = \Drupal::configFactory()
-    ->getEditable('shorthand.settings');
-  
-  // Set default stream wrapper to 'public' if not already configured.
-  if ($config->get('file_stream_wrapper') === NULL) {
-    $config->set('file_stream_wrapper', 'public')->save();
-    
-    \Drupal::messenger()->addStatus(t('Shorthand module now supports configurable stream wrappers. The default "public://" stream wrapper has been configured. You can change this in the Shorthand settings to use S3, Azure, or other storage backends.'));
-  }
-  
-  return t('Added configurable stream wrapper support to Shorthand module.');
 }

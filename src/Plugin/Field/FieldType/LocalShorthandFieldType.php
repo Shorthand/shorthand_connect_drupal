@@ -2,24 +2,23 @@
 
 namespace Drupal\shorthand\Plugin\Field\FieldType;
 
+use Drupal\Core\Field\Attribute\FieldType;
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 
 /**
  * Plugin implementation of the 'shorthand_local' field type.
- *
- * @FieldType(
- *   id = "shorthand_local",
- *   label = @Translation("Shorthand select"),
- *   description = @Translation("Select from downloaded Shorthand stories."),
- *   module = "shorthand",
- *   category = "reference",
- *   default_widget = "shorthand_local_story_select",
- *   default_formatter = "shorthand_local_story_render"
- *
- * )
  */
+#[FieldType(
+  id: "shorthand_local",
+  label: new TranslatableMarkup("Shorthand select"),
+  description: new TranslatableMarkup("Select from downloaded Shorthand stories."),
+  module: "shorthand",
+  default_widget: "shorthand_local_story_select",
+  default_formatter: "shorthand_local_story_render",
+)]
 class LocalShorthandFieldType extends FieldItemBase {
 
   /**

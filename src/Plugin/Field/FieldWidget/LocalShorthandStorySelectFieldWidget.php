@@ -2,6 +2,7 @@
 
 namespace Drupal\shorthand\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Field\Attribute\FieldWidget;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
@@ -9,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\shorthand\Controller\RemoteCollectionController;
 use Drupal\shorthand\ShorthandApiInterface;
 use GuzzleHttp\Exception\ConnectException;
@@ -16,15 +18,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Plugin implementation of the 'shorthand_local_story_select' widget.
- *
- * @FieldWidget(
- *   id = "shorthand_local_story_select",
- *   label = @Translation("Shorthand Story select"),
- *   field_types = {
- *     "shorthand_local"
- *   }
- * )
  */
+#[FieldWidget(
+  id: "shorthand_local_story_select",
+  label: new TranslatableMarkup("Shorthand Story select"),
+  field_types: [
+    "shorthand_local",
+  ],
+)]
 class LocalShorthandStorySelectFieldWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
   /**
@@ -126,10 +127,8 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    */
   protected function buildStoriesList() {
     $options = [0 => $this->t('- Select -')];
-    
-    // Get the stream wrapper service.
-    $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
-    $destination_uri = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
+
+    $destination_uri = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH;
 
     if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
       $this->messenger()->addWarning($this->t('Error accessing shorthand stories folder.'));

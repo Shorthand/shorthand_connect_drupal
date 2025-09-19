@@ -9,7 +9,6 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\shorthand\ShorthandApiInterface;
-use Drupal\shorthand\ShorthandStreamWrapper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -59,13 +58,6 @@ class RemoteCollectionController extends ControllerBase {
   protected $messenger;
 
   /**
-   * The shorthand stream wrapper service.
-   *
-   * @var \Drupal\shorthand\ShorthandStreamWrapper
-   */
-  protected $streamWrapper;
-
-  /**
    * The constructor method.
    *
    * @param \Drupal\Core\Session\AccountInterface $current_user
@@ -78,17 +70,13 @@ class RemoteCollectionController extends ControllerBase {
    *   The renderer service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger interface.
-   * @param \Drupal\shorthand\ShorthandStreamWrapper $stream_wrapper
-   *   The shorthand stream wrapper service.
    */
-  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger, ShorthandStreamWrapper $stream_wrapper = NULL) {
+  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger) {
     $this->currentUser = $current_user;
     $this->shorthandApi = $shorthand_api;
     $this->fileSystem = $file_system;
     $this->renderer = $renderer;
     $this->messenger = $messenger;
-    // Make stream wrapper optional for backward compatibility.
-    $this->streamWrapper = $stream_wrapper ?: \Drupal::service('shorthand.stream_wrapper');
   }
 
   /**
@@ -101,8 +89,7 @@ class RemoteCollectionController extends ControllerBase {
       $container->get('shorthand_api'),
       $container->get('file_system'),
       $container->get('renderer'),
-      $container->get('messenger'),
-      $container->get('shorthand.stream_wrapper')
+      $container->get('messenger')
     );
   }
 
@@ -129,52 +116,18 @@ class RemoteCollectionController extends ControllerBase {
     foreach ($sids as $sid) {
       $file = $apiService->getStory($sid, []);
       $file_system = \Drupal::service('file_system');
-      $zip_realpath = $file_system->realpath($file);
+      $filepath = $file_system->realpath($file);
       $archiver = \Drupal::service('plugin.manager.archiver')
-        ->getInstance(['filepath' => $zip_realpath]);
+        ->getInstance(['filepath' => $filepath]);
 
       $timestamp = $stories[$sid];
-      $stream_wrapper_service = \Drupal::service('shorthand.stream_wrapper');
-
-      // Destination in the configured stream wrapper (e.g., s3:// or public://).
-      $destination_uri = $stream_wrapper_service->getStorageUri(static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp);
-      // Ensure destination directory exists (URI-based; works with wrappers).
+      $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp;
       $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
+      $destination_path = $file_system->realpath($destination_uri);
+      $result = $archiver->extract($destination_path);
+      $file_system->delete($filepath);
 
-      // Extract into a temporary local directory, then copy into destination URI.
-      $temp_extract_dir_uri = 'temporary://shorthand_extract/' . $sid . '/' . $timestamp;
-      $file_system->prepareDirectory($temp_extract_dir_uri, FileSystemInterface::CREATE_DIRECTORY);
-      $temp_extract_dir_real = $file_system->realpath($temp_extract_dir_uri);
-
-      $result = $archiver->extract($temp_extract_dir_real);
-
-      if ($result) {
-        // Recursively copy extracted files from local temp to destination URI.
-        // Create subdirectories first, then copy files.
-        $iterator = new \RecursiveIteratorIterator(
-          new \RecursiveDirectoryIterator($temp_extract_dir_real, \FilesystemIterator::SKIP_DOTS),
-          \RecursiveIteratorIterator::SELF_FIRST
-        );
-        foreach ($iterator as $item) {
-          $relative_path = ltrim(str_replace($temp_extract_dir_real, '', $item->getPathname()), DIRECTORY_SEPARATOR);
-          $target_uri = rtrim($destination_uri, '/') . '/' . str_replace(DIRECTORY_SEPARATOR, '/', $relative_path);
-          if ($item->isDir()) {
-            $file_system->prepareDirectory($target_uri, FileSystemInterface::CREATE_DIRECTORY);
-          }
-          else {
-            // Ensure parent dir exists.
-            $parent_dir = dirname($target_uri);
-            $file_system->prepareDirectory($parent_dir, FileSystemInterface::CREATE_DIRECTORY);
-            $file_system->copy($item->getPathname(), $target_uri, FileSystemInterface::EXISTS_REPLACE);
-          }
-        }
-      }
-
-      // Cleanup temporary extraction and local zip file.
-      $file_system->deleteRecursive($temp_extract_dir_uri);
-      $file_system->delete($zip_realpath);
-
-      $results[] = (bool) $result;
+      $results[] = $result;
     }
 
     $context['message'] = $message;
@@ -220,7 +173,7 @@ class RemoteCollectionController extends ControllerBase {
     }
 
     // List downloaded stories.
-    $destination_uri = $this->streamWrapper->getStorageUri(static::SHORTHAND_STORY_BASE_PATH);
+    $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH;
 
     if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY)) {
       $this->messenger->addWarning($this->t('Error accessing shorthand stories folder.'));
@@ -260,10 +213,9 @@ class RemoteCollectionController extends ControllerBase {
       $title = $this->t('Download story');
       $type = 'link';
       if (in_array($story['id'], $localStories)) {
-        // Consider a story up to date if its article exists for the latest
-        // timestamped version.
-        $version_article_uri = $this->streamWrapper->getStorageUri(static::SHORTHAND_STORY_BASE_PATH . '/' . $story['id'] . '/' . $story['updated'] . '/article.html');
-        if (file_exists($version_article_uri)) {
+
+        $path = $this->fileSystem->realpath('public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $story['id'] . '/' . $story['updated']);
+        if (file_exists($path)) {
           $title = $this->t('The story is up to date');
           $type = 'markup';
         }

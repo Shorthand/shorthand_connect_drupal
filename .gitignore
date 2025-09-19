@@ -1,3 +1,6 @@
 
 shorthand_connect/config.php
 .DS_Store
+/_docker/certificates
+.DS_Store
+/_docker/logs

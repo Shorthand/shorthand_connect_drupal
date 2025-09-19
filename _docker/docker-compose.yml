@@ -1,36 +1,119 @@
-  services:
-    # Postgres
-    db:
-      image: postgres:latest
-      restart: always
-      environment:
-        POSTGRES_DB: drupaldb
-        POSTGRES_USER: drupaluser
-        POSTGRES_PASSWORD: drupalpassword
-      volumes:
-        - db_data:/var/lib/postgresql/data
-      ports:
-        - 5432:5432
-    
-    # Drupal
-    cms:
-      image: drupal:latest
-      restart: always
-      ports:
-        - 9191:80
-      volumes:
-        - cms_modules:/var/www/html/modules
-        - cms_profiles:/var/www/html/profiles
-        - cms_themes:/var/www/html/themes
-        - cms_sites:/var/www/html/sites
-        - ..:/var/www/html/modules/custom/shorthand
-      depends_on:
-        - db
-    
-  # Volumes
-  volumes:
-    db_data:
-    cms_modules:
-    cms_profiles:
-    cms_themes:
-    cms_sites:
+services:
+  # MariaDB Database
+  db:
+    image: mariadb:11
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-drupaldb}
+      MYSQL_USER: ${DB_USER:-drupaluser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-drupalpass}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - drupal_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Drupal with PHP-FPM
+  drupal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-drupaldb}
+      DB_USER: ${DB_USER:-drupaluser}
+      DB_PASSWORD: ${DB_PASSWORD:-drupalpass}
+      DRUPAL_HASH_SALT: ${DRUPAL_HASH_SALT:-changeme}
+      # Development settings
+      PHP_MEMORY_LIMIT: 256M
+      PHP_MAX_EXECUTION_TIME: 300
+      PHP_POST_MAX_SIZE: 100M
+      PHP_UPLOAD_MAX_FILESIZE: 100M
+      # Xdebug settings
+      XDEBUG_MODE: ${XDEBUG_MODE:-develop,debug}
+      XDEBUG_CONFIG: client_host=host.docker.internal client_port=9003
+    volumes:
+      # Share entire web root with nginx
+      - drupal_web:/opt/drupal/web
+      - drupal_private:/opt/drupal/private
+      # Mount the Shorthand module for development
+      - ..:/opt/drupal/web/modules/custom/shorthand:rw
+      # Mount custom settings
+      - ./settings/settings.local.php:/opt/drupal/web/sites/default/settings.local.php:ro
+      # Mount SSL certificates
+      - ./certificates:/usr/local/share/ca-certificates:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - drupal_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Nginx Web Server with SSL
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./certificates:/etc/nginx/ssl:ro
+      # Share Drupal web root with PHP-FPM container
+      - drupal_web:/opt/drupal/web:ro
+      # Nginx logs
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - drupal
+    networks:
+      - drupal_network
+
+  # Adminer for database management (optional)
+  adminer:
+    image: adminer:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha
+    depends_on:
+      - db
+    networks:
+      - drupal_network
+
+  # MailHog for email testing (optional)
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: always
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    networks:
+      - drupal_network
+
+# Volumes for persistent data
+volumes:
+  db_data:
+    driver: local
+  drupal_web:
+    driver: local
+  drupal_private:
+    driver: local
+
+# Networks
+networks:
+  drupal_network:
+    driver: bridge
+    name: drupal_dev_network

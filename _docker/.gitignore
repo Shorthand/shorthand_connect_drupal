@@ -1,0 +1,32 @@
+# SSL Certificates (environment-specific)
+certificates/
+*.crt
+*.key
+*.csr
+*.srl
+*.pem
+
+# Logs
+logs/
+*.log
+
+# Environment-specific files
+.env.local
+.env.production
+
+# Docker volumes
+data/
+mysql-data/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*~

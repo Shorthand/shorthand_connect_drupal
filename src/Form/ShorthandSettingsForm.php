@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\shorthand\ShorthandApiInterface;
+use Drupal\Core\StreamWrapper\StreamWrapperInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -57,7 +58,7 @@ class ShorthandSettingsForm extends ConfigFormBase {
     TypedConfigManagerInterface $typed_config_manager,
     AccountInterface $current_user,
     ModuleHandlerInterface $module_handler,
-    ShorthandApiInterface $shorthand_api,
+    ShorthandApiInterface $shorthand_api
   ) {
     parent::__construct($config_factory, $typed_config_manager);
     $this->currentUser = $current_user;
@@ -134,6 +135,24 @@ class ShorthandSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('input_format'),
     ];
 
+    // Get available stream wrappers (writable and visible).
+    $stream_wrapper_manager = \Drupal::service('stream_wrapper_manager');
+    $stream_wrappers = $stream_wrapper_manager->getWrappers(StreamWrapperInterface::WRITE_VISIBLE);
+    $stream_wrapper_options = [];
+    foreach ($stream_wrappers as $scheme => $wrapper) {
+      $stream_wrapper_options[$scheme] = $wrapper['name'] . ' (' . $scheme . '://)';
+    }
+    ksort($stream_wrapper_options);
+
+    $form['file_stream_wrapper'] = [
+      '#title' => $this->t('File storage location'),
+      '#description' => $this->t('Select the stream wrapper to use for storing Shorthand story files. This allows you to store files on S3, Azure, or other configured file systems.'),
+      '#type' => 'select',
+      '#options' => $stream_wrapper_options,
+      '#default_value' => $config->get('file_stream_wrapper') ?? 'public',
+      '#required' => TRUE,
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -144,6 +163,15 @@ class ShorthandSettingsForm extends ConfigFormBase {
     $isValid = $this->shorthandApi->validateApiKey($form_state->getValue('shorthand_token'));
     if (!$isValid) {
       $form_state->setErrorByName('shorthand_token', $this->t('API key is not valid.'));
+    }
+    // Validate selected stream wrapper is writable and available.
+    $selected_scheme = $form_state->getValue('file_stream_wrapper');
+    if ($selected_scheme) {
+      $stream_wrapper_manager = \Drupal::service('stream_wrapper_manager');
+      $writable = $stream_wrapper_manager->getWrappers(StreamWrapperInterface::WRITE_VISIBLE);
+      if (!isset($writable[$selected_scheme])) {
+        $form_state->setErrorByName('file_stream_wrapper', $this->t('Selected file storage scheme is not writable or not available.'));
+      }
     }
   }
 
@@ -156,6 +184,7 @@ class ShorthandSettingsForm extends ConfigFormBase {
       ->set('shorthand_token', $form_state->getValue('shorthand_token'))
       ->set('request_timeout', $form_state->getValue('shorthand_request_timeout'))
       ->set('input_format', $form_state->getValue('shorthand_input_format'))
+      ->set('file_stream_wrapper', $form_state->getValue('file_stream_wrapper'))
       ->save();
 
     parent::submitForm($form, $form_state);

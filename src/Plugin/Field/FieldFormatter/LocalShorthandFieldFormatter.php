@@ -5,8 +5,6 @@ namespace Drupal\shorthand\Plugin\Field\FieldFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Render\Markup;
-use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\Core\Url;
 use Drupal\shorthand\Controller\RemoteCollectionController;
 
 /**
@@ -36,11 +34,14 @@ class LocalShorthandFieldFormatter extends FormatterBase {
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $element = [];
+    
+    // Get the stream wrapper service.
+    $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
 
     // Render each element.
     foreach ($items as $delta => $item) {
       $path = $item->value;
-      $filePath = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path;
+      $filePath = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path);
       $filePathTheme = $filePath . '/theme.min.css';
       $filePathHead = $filePath . '/head.html';
       $filePathArticle = $filePath . '/article.html';
@@ -49,16 +50,26 @@ class LocalShorthandFieldFormatter extends FormatterBase {
         continue;
       }
 
-      $public = PublicStream::basePath();
+      // Build absolute URLs for assets and static from the configured scheme.
+      $file_url_generator = \Drupal::service('file_url_generator');
+      $story_base_uri = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/');
+      $assets_uri = $story_base_uri . 'assets/';
+      $static_uri = $story_base_uri . 'static/';
+      $assets_url = $file_url_generator->generateAbsoluteString($assets_uri);
+      $static_url = $file_url_generator->generateAbsoluteString($static_uri);
+
       $html = file_get_contents($filePathArticle);
       $head = file_get_contents($filePathHead);
-      foreach (['assets', 'static'] as $folder) {
-        $url = Url::fromUserInput('/' . $public . '/' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/' . $folder . '/', [
-          'absolute' => TRUE,
-        ])->toString();
-        $html = str_replace('./' . $folder . '/', $url, $html);
-        $head = str_replace('./' . $folder . '/', $url, $head);
-      }
+      $story_base_url = rtrim($file_url_generator->generateAbsoluteString($story_base_uri), '/');
+      $html = str_replace('./assets/', rtrim($assets_url, '/') . '/', $html);
+      $head = str_replace('./assets/', rtrim($assets_url, '/') . '/', $head);
+      $html = str_replace('./static/', rtrim($static_url, '/') . '/', $html);
+      $head = str_replace('./static/', rtrim($static_url, '/') . '/', $head);
+      // Fallback for other relative resources like theme CSS and root files.
+      $html = str_replace('href="./', 'href="' . $story_base_url . '/', $html);
+      $head = str_replace('href="./', 'href="' . $story_base_url . '/', $head);
+      $html = str_replace('src="./', 'src="' . $story_base_url . '/', $html);
+      $head = str_replace('src="./', 'src="' . $story_base_url . '/', $head);
 
       // Replace title.
       $head = preg_replace('#([<]title)(.*)([<]/title[>])#s', ' ', $head);

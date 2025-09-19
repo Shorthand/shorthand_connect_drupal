@@ -134,7 +134,8 @@ function shorthand_metatags_alter(array &$metatags, array &$context) {
 
       if ($path = $entity->get($name)->value) {
         // Parse metatags.
-        $filePathHead = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/head.html';
+        $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
+        $filePathHead = $stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/head.html');
 
         if (!file_exists($filePathHead)) {
           continue;
@@ -174,7 +175,7 @@ function shorthand_metatags_alter(array &$metatags, array &$context) {
                 $content = explode('/assets/', $attributes['content']);
                 if (is_array($content) && count($content) > 1) {
                   $metatags[$metaname] = \Drupal::service('file_url_generator')
-                    ->generateAbsoluteString('public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/assets/' . $content[1]);
+                    ->generateAbsoluteString($stream_wrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path . '/assets/' . $content[1]));
                 }
               }
             }

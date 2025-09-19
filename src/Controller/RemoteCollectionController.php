@@ -9,6 +9,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\shorthand\ShorthandApiInterface;
+use Drupal\shorthand\ShorthandStreamWrapper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -71,12 +72,13 @@ class RemoteCollectionController extends ControllerBase {
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger interface.
    */
-  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger) {
+  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger, ShorthandStreamWrapper $stream_wrapper) {
     $this->currentUser = $current_user;
     $this->shorthandApi = $shorthand_api;
     $this->fileSystem = $file_system;
     $this->renderer = $renderer;
     $this->messenger = $messenger;
+    $this->streamWrapper = $stream_wrapper;
   }
 
   /**
@@ -89,7 +91,8 @@ class RemoteCollectionController extends ControllerBase {
       $container->get('shorthand_api'),
       $container->get('file_system'),
       $container->get('renderer'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('shorthand.stream_wrapper')
     );
   }
 
@@ -121,7 +124,8 @@ class RemoteCollectionController extends ControllerBase {
         ->getInstance(['filepath' => $filepath]);
 
       $timestamp = $stories[$sid];
-      $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp;
+    $stream_wrapper = \Drupal::service('shorthand.stream_wrapper');
+    $destination_uri = $stream_wrapper->getStorageUri(static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp);
       $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
       $destination_path = $file_system->realpath($destination_uri);
       $result = $archiver->extract($destination_path);
@@ -173,7 +177,7 @@ class RemoteCollectionController extends ControllerBase {
     }
 
     // List downloaded stories.
-    $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH;
+    $destination_uri = $this->streamWrapper->getStorageUri(static::SHORTHAND_STORY_BASE_PATH);
 
     if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY)) {
       $this->messenger->addWarning($this->t('Error accessing shorthand stories folder.'));
@@ -214,7 +218,7 @@ class RemoteCollectionController extends ControllerBase {
       $type = 'link';
       if (in_array($story['id'], $localStories)) {
 
-        $path = $this->fileSystem->realpath('public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $story['id'] . '/' . $story['updated']);
+        $path = $this->fileSystem->realpath($this->streamWrapper->getStorageUri(static::SHORTHAND_STORY_BASE_PATH . '/' . $story['id'] . '/' . $story['updated']));
         if (file_exists($path)) {
           $title = $this->t('The story is up to date');
           $type = 'markup';

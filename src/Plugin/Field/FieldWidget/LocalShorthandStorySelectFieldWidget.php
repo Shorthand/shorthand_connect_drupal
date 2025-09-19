@@ -13,6 +13,7 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\shorthand\Controller\RemoteCollectionController;
 use Drupal\shorthand\ShorthandApiInterface;
+use Drupal\shorthand\ShorthandStreamWrapper;
 use GuzzleHttp\Exception\ConnectException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -57,6 +58,13 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
   protected $shorthandStories;
 
   /**
+   * The stream wrapper service.
+   *
+   * @var \Drupal\shorthand\ShorthandStreamWrapper
+   */
+  protected $streamWrapper;
+
+  /**
    * The constructor method.
    *
    * @param string $plugin_id
@@ -76,12 +84,13 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi, RendererInterface $renderer, FileSystemInterface $file_system) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi, RendererInterface $renderer, FileSystemInterface $file_system, ShorthandStreamWrapper $stream_wrapper) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
     $this->shorthandApi = $shorthandApi;
     $this->fileSystem = $file_system;
     $this->shorthandStories = $this->shorthandApi->getStories();
     $this->renderer = $renderer;
+    $this->streamWrapper = $stream_wrapper;
   }
 
   /**
@@ -96,7 +105,8 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
       $configuration['third_party_settings'],
       $container->get('shorthand_api'),
       $container->get('renderer'),
-      $container->get('file_system')
+      $container->get('file_system'),
+      $container->get('shorthand.stream_wrapper')
     );
   }
 
@@ -128,7 +138,7 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
   protected function buildStoriesList() {
     $options = [0 => $this->t('- Select -')];
 
-    $destination_uri = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH;
+    $destination_uri = $this->streamWrapper->getStorageUri(RemoteCollectionController::SHORTHAND_STORY_BASE_PATH);
 
     if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
       $this->messenger()->addWarning($this->t('Error accessing shorthand stories folder.'));

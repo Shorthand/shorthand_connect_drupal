@@ -110,10 +110,23 @@ class ShorthandSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('shorthand_token'),
     ];
 
-    $text_format_options = [];
-    foreach (filter_formats() as $key => $filter) {
-      $text_format_options[$key] = $filter->label();
+    // Select writable stream wrapper for storage of Shorthand stories.
+    $stream_wrapper_manager = \Drupal::service('stream_wrapper_manager');
+    $wrappers = $stream_wrapper_manager->getWrappers(\Drupal\Core\StreamWrapper\StreamWrapperInterface::WRITE_VISIBLE);
+    $stream_wrapper_options = [];
+    foreach ($wrappers as $scheme => $wrapper) {
+      $stream_wrapper_options[$scheme] = $wrapper['name'] . ' (' . $scheme . '://)';
     }
+    ksort($stream_wrapper_options);
+
+    $form['file_stream_wrapper'] = [
+      '#title' => $this->t('File storage location'),
+      '#description' => $this->t('Select the stream wrapper to use for storing Shorthand story files. This allows you to store files on S3, Azure, or other configured file systems.'),
+      '#type' => 'select',
+      '#options' => $stream_wrapper_options,
+      '#default_value' => $config->get('file_stream_wrapper') ?? 'public',
+      '#required' => TRUE,
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -126,6 +139,16 @@ class ShorthandSettingsForm extends ConfigFormBase {
     if (!$isValid) {
       $form_state->setErrorByName('shorthand_token', $this->t('API key is not valid.'));
     }
+
+    // Validate selected stream wrapper is writable and available.
+    $selected_scheme = $form_state->getValue('file_stream_wrapper');
+    if ($selected_scheme) {
+      $stream_wrapper_manager = \Drupal::service('stream_wrapper_manager');
+      $writable = $stream_wrapper_manager->getWrappers(\Drupal\Core\StreamWrapper\StreamWrapperInterface::WRITE_VISIBLE);
+      if (!isset($writable[$selected_scheme])) {
+        $form_state->setErrorByName('file_stream_wrapper', $this->t('Selected file storage scheme is not writable or not available.'));
+      }
+    }
   }
 
   /**
@@ -135,6 +158,7 @@ class ShorthandSettingsForm extends ConfigFormBase {
     $config = $this->config('shorthand.settings');
     $config
       ->set('shorthand_token', $form_state->getValue('shorthand_token'))
+      ->set('file_stream_wrapper', $form_state->getValue('file_stream_wrapper'))
       ->save();
 
     parent::submitForm($form, $form_state);

@@ -1,1 +1,4 @@
 shorthand_token: ''
+request_timeout: 120
+input_format: 'full_html'
+file_stream_wrapper: 'public'

@@ -123,7 +123,7 @@ class ShorthandStoryForm extends ContentEntityForm {
     // Check formats.
     $formats = array_keys(filter_formats());
     $config = $this->config('shorthand.settings');
-    $input_format = $config->get('input_format', filter_default_format());
+    $input_format = $config->get('input_format') ?? filter_default_format();
 
     $format_fail = !in_array($input_format, $formats);
     $load_fail = ($form['shorthand_id']['widget'][0]['value']['#options'] == [0 => "Cannot retrieve stories"]);

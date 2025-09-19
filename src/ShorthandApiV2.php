@@ -241,9 +241,9 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   public function getStory($id, $params) {
+    $temp_path = $this->getStoryFileTempPath();
 
     try {
-      $temp_path = $this->getStoryFileTempPath();
       $this->httpClient->get('v2/stories/' . $id . (isset($params) ? '?' . http_build_query($params) : ''), [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
@@ -298,7 +298,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
     catch (BadResponseException $error) {
       $message = $error->getMessage();
       $this->messenger->addError($message);
-      $this->messenger->addError($request);
       $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
     }
   }
@@ -332,8 +331,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   public function validateApiKey($token) {
     try {
-      error_log('TESTING THIS');
-      error_log($this->getBaseUri());
       $this->httpClient->get('v2/token-info/', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders($token),

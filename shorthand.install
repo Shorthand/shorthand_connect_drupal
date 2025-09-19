@@ -28,7 +28,7 @@ function shorthand_uninstall() {
 /**
  * Convert settings to config.
  */
-function shorthand_8001(&$sandbox) {
+function shorthand_update_8001(&$sandbox) {
   $settings = \Drupal::service('settings');
   $config = \Drupal::configFactory()
     ->getEditable('shorthand.settings');
@@ -76,7 +76,7 @@ function shorthand_update_8002() {
 
   $authors = BaseFieldDefinition::create('string')
     ->setLabel(t('Authors'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setDescription(t('The authors of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
     ->setSettings([
       'max_length' => 255,
@@ -99,7 +99,7 @@ function shorthand_update_8002() {
 
   $keywords = BaseFieldDefinition::create('string')
     ->setLabel(t('Keywords'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setDescription(t('The keywords of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
     ->setSettings([
       'max_length' => 255,
@@ -122,7 +122,7 @@ function shorthand_update_8002() {
 
   $description = BaseFieldDefinition::create('string')
     ->setLabel(t('Description'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setDescription(t('The description/subtitle of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
     ->setSettings([
       'max_length' => 255,
@@ -145,7 +145,7 @@ function shorthand_update_8002() {
 
   $external_url = BaseFieldDefinition::create('string')
     ->setLabel(t('Externally Published URL'))
-    ->setDescription(t('The thumbnail URL of the Shorthand story entity.'))
+    ->setDescription(t('The external published URL of the Shorthand story entity.'))
     ->setRevisionable(TRUE)
     ->setSettings([
       'max_length' => 255,
@@ -193,28 +193,26 @@ function shorthand_update_8003() {
     ->setDisplayConfigurable('form', TRUE)
     ->setDisplayConfigurable('view', TRUE);
 
-  $definition_update_manager->installFieldStorageDefinition('external_url', 'shorthand_story', 'shorthand', $external_assets);
+  $definition_update_manager->installFieldStorageDefinition('external_assets', 'shorthand_story', 'shorthand', $external_assets);
 
   $external_publishing_config = BaseFieldDefinition::create('string')
-    ->setLabel(t('Publishing Configuration'))
-    ->setDescription(t('The publishing configuration to use for assets.'))
-    ->setRevisionable(TRUE)
+    ->setLabel(t('Publishing Configuration ID'))
+    ->setDescription(t('Shorthand Publishing Configuration ID.'))
+    ->setRevisionable(FALSE)
     ->setSettings([
       'max_length' => 255,
       'text_processing' => 0,
     ])
     ->setDefaultValue('')
     ->setDisplayOptions('view', [
-      'label' => 'above',
-      'type' => 'string',
-      'weight' => 1,
+      'region' => 'hidden',
     ])
     ->setDisplayOptions('form', [
-      'type' => 'string_textfield',
+      'type' => 'shorthand_publish_configuration_select',
       'weight' => 1,
     ])
-    ->setDisplayConfigurable('form', TRUE)
-    ->setDisplayConfigurable('view', TRUE);
+    ->setDisplayConfigurable('form', FALSE)
+    ->setDisplayConfigurable('view', FALSE);
 
   $definition_update_manager->installFieldStorageDefinition('external_publishing_config', 'shorthand_story', 'shorthand', $external_publishing_config);
 
@@ -229,6 +227,7 @@ function shorthand_update_9001() {
 
   $config
     ->set('shorthand_token', $config->get('token'))
+    ->clear('token')
     ->save();
 }
 
@@ -242,9 +241,30 @@ function shorthand_update_9002() {
   // Set default stream wrapper to 'public' if not already configured.
   if ($config->get('file_stream_wrapper') === NULL) {
     $config->set('file_stream_wrapper', 'public')->save();
-    
-    \Drupal::messenger()->addStatus(t('Shorthand module now supports configurable stream wrappers. The default "public://" stream wrapper has been configured. You can change this in the Shorthand settings to use S3, Azure, or other storage backends.'));
   }
   
   return t('Added configurable stream wrapper support to Shorthand module.');
+}
+
+/**
+ * Migrate deprecated config keys to current names.
+ */
+function shorthand_update_9003() {
+  $config = \Drupal::configFactory()->getEditable('shorthand.settings');
+
+  // Migrate shorthand_input_format -> input_format.
+  if ($config->get('input_format') === NULL && $config->get('shorthand_input_format') !== NULL) {
+    $config->set('input_format', $config->get('shorthand_input_format'));
+    $config->clear('shorthand_input_format');
+  }
+
+  // Migrate shorthand_request_timeout -> request_timeout.
+  if ($config->get('request_timeout') === NULL && $config->get('shorthand_request_timeout') !== NULL) {
+    $config->set('request_timeout', $config->get('shorthand_request_timeout'));
+    $config->clear('shorthand_request_timeout');
+  }
+
+  $config->save();
+
+  return t('Migrated deprecated Shorthand config keys to current names.');
 }

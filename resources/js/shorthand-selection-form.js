@@ -145,7 +145,6 @@ if (storyFilter) {
     const filter = storyFilter.value;
     filterStories(filter.toLowerCase());
   });
-  
 }
 
 updateSelection();

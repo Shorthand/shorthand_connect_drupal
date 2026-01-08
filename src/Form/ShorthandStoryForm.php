@@ -61,10 +61,6 @@ class ShorthandStoryForm extends ContentEntityForm {
    *
    * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
    *   The entity repository.
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
-   *   The entity type bundle service.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
@@ -73,15 +69,26 @@ class ShorthandStoryForm extends ContentEntityForm {
    *   The logger instance.
    * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory instance.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle service.
+   * @param \Drupal\Component\Datetime\TimeInterface $time
+   *   The time service.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository,
-    EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL,
-    TimeInterface $time = NULL,
+  public function __construct(
+    EntityRepositoryInterface $entity_repository,
     AccountInterface $current_user,
     MessengerInterface $messenger,
     LoggerInterface $logger,
-    ConfigFactoryInterface $config_factory) {
-    parent::__construct($entity_repository, $entity_type_bundle_info, $time, $config_factory);
+    ConfigFactoryInterface $config_factory,
+    EntityTypeBundleInfoInterface|null $entity_type_bundle_info = NULL,
+    TimeInterface|null $time = NULL,
+  ) {
+    parent::__construct(
+      $entity_repository,
+      $entity_type_bundle_info,
+      $config_factory,
+      $time,
+    );
     $this->currentUser = $current_user;
     $this->time = $time;
     $this->messenger = $messenger;
@@ -177,7 +184,10 @@ class ShorthandStoryForm extends ContentEntityForm {
           '%label' => $entity->label(),
         ]));
     }
-    $form_state->setRedirect('entity.shorthand_story.canonical', ['shorthand_story' => $entity->id()]);
+    return $form_state->setRedirect(
+      'entity.shorthand_story.canonical',
+      ['shorthand_story' => $entity->id()]
+    );
   }
 
 }

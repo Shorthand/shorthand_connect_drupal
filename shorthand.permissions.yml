@@ -6,3 +6,7 @@ administer shorthand:
 download shorthand content:
   title: 'Download shorthand stories'
   description: 'Download remote shorthand stories locally.'
+
+delete shorthand content:
+  title: 'Delete shorthand stories'
+  description: 'Delete locally downloaded shorthand stories and versions.'

@@ -110,6 +110,13 @@ class ShorthandSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('shorthand_token'),
     ];
 
+    $form['keep_previous_versions'] = [
+      '#title' => $this->t('Keep previously downloaded versions'),
+      '#description' => $this->t('When unchecked, older downloaded versions are deleted whenever a story is updated, keeping only the latest version in local storage.'),
+      '#type' => 'checkbox',
+      '#default_value' => $config->get('keep_previous_versions') ?? TRUE,
+    ];
+
     $text_format_options = [];
     foreach (filter_formats() as $key => $filter) {
       $text_format_options[$key] = $filter->label();
@@ -135,6 +142,7 @@ class ShorthandSettingsForm extends ConfigFormBase {
     $config = $this->config('shorthand.settings');
     $config
       ->set('shorthand_token', $form_state->getValue('shorthand_token'))
+      ->set('keep_previous_versions', $form_state->getValue('keep_previous_versions'))
       ->save();
 
     parent::submitForm($form, $form_state);

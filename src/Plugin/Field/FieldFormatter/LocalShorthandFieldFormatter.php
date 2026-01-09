@@ -42,11 +42,10 @@ class LocalShorthandFieldFormatter extends FormatterBase {
     foreach ($items as $delta => $item) {
       $path = $item->value;
       $filePath = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH . '/' . $path;
-      $filePathTheme = $filePath . '/theme.min.css';
       $filePathHead = $filePath . '/head.html';
       $filePathArticle = $filePath . '/article.html';
 
-      if (!file_exists($filePathTheme) || !file_exists($filePathArticle)) {
+      if (!file_exists($filePathArticle)) {
         continue;
       }
 

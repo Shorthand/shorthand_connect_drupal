@@ -1,5 +1,7 @@
 <?php
 
+namespace Drupal\shorthand\Drush\Commands;
+
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -35,27 +37,24 @@ class ShorthandCommands extends DrushCommands {
   protected FileSystemInterface $fileSystem;
 
   /**
-   * UpdatePressReleasesCommand constructor.
+   * ShorthandCommands constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $nodeStorage
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   Entity type manager.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file handler.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(EntityTypeManagerInterface $nodeStorage, FileSystemInterface $file_system) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystemInterface $file_system) {
     parent::__construct();
-    $this->nodeStorage = $nodeStorage->getStorage('node');
+    $this->nodeStorage = $entity_type_manager->getStorage('node');
     $this->fileSystem = $file_system;
   }
 
   /**
-   * Drush command to clean up not used shorthands.
+   * Drush command to clean up not used shorthand stories.
    *
-   * @command common:clean-up-shorthand
-   * @aliases cush
+   * @command shorthand:clean-up
+   * @aliases shcu
    */
   public function run() {
     $confirm = $this->io()->confirm('Are you sure you want to delete all not used shorthands?', TRUE);

@@ -9,7 +9,7 @@ dependencies:
 
 configure: shorthand.settings_form
 
-# Information added by Drupal.org packaging script on 2025-08-31
-version: '5.0.0-beta1'
+# Information added by Drupal.org packaging script on 2025-11-30
+version: '5.0.0-rc1'
 project: 'shorthand'
-datestamp: 1756651936
+datestamp: 1764511514

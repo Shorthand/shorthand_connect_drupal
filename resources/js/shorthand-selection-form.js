@@ -90,7 +90,7 @@ Object.keys(visualOptions).forEach((key) => {
   const storyWrapper = document.createElement('div');
   storyWrapper.className = 'shorthand-story';
   storyWrapper.innerHTML = `
-    <img src="${visualOption.image}"/>
+    <img src="${visualOption.image || visualOption.thumbnail_route || ''}" data-fallback-src="${visualOption.thumbnail_route || ''}"/>
     <div class="story-details">
       <h3>${visualOption.title}</h3>
       <p>${visualOption.metadata.description}</p>
@@ -99,6 +99,17 @@ Object.keys(visualOptions).forEach((key) => {
       </div>
     </div>
   `;
+
+  const thumbnail = storyWrapper.querySelector('img');
+  if (thumbnail) {
+    thumbnail.addEventListener('error', () => {
+      const fallbackSrc = thumbnail.dataset.fallbackSrc;
+      if (fallbackSrc) {
+        thumbnail.dataset.fallbackSrc = '';
+        thumbnail.src = fallbackSrc;
+      }
+    }, { once: true });
+  }
 
   shorthandStoriesWrapper.appendChild(storyWrapper);
   storyWrapper.addEventListener('click', () => {

@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\shorthand\ShorthandApiInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -21,6 +22,16 @@ class RemoteCollectionController extends ControllerBase {
    * Defines shorthand stories container base path.
    */
   const SHORTHAND_STORY_BASE_PATH = 'shorthand/stories';
+
+  /**
+   * Number of remote stories to request per page by default.
+   */
+  const DEFAULT_STORIES_LIMIT = 100;
+
+  /**
+   * Maximum number of remote stories to request per page.
+   */
+  const MAX_STORIES_LIMIT = 250;
 
   /**
    * The current user.
@@ -58,6 +69,13 @@ class RemoteCollectionController extends ControllerBase {
   protected $messenger;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * The constructor method.
    *
    * @param \Drupal\Core\Session\AccountInterface $current_user
@@ -70,13 +88,16 @@ class RemoteCollectionController extends ControllerBase {
    *   The renderer service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger interface.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack.
    */
-  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger) {
+  public function __construct(AccountInterface $current_user, ShorthandApiInterface $shorthand_api, FileSystemInterface $file_system, RendererInterface $renderer, MessengerInterface $messenger, RequestStack $request_stack) {
     $this->currentUser = $current_user;
     $this->shorthandApi = $shorthand_api;
     $this->fileSystem = $file_system;
     $this->renderer = $renderer;
     $this->messenger = $messenger;
+    $this->requestStack = $request_stack;
   }
 
   /**
@@ -88,7 +109,8 @@ class RemoteCollectionController extends ControllerBase {
       $container->get('shorthand_api'),
       $container->get('file_system'),
       $container->get('renderer'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('request_stack')
     );
   }
 
@@ -97,26 +119,38 @@ class RemoteCollectionController extends ControllerBase {
    *
    * @param array $sids
    *   List of shorthand stories IDs.
+   * @param array $story_versions
+   *   List of Shorthand story updated timestamps keyed by story ID.
    * @param array $context
    *   Batch content configuration.
    */
-  public static function downloadStoryBatch(array $sids, array &$context) {
+  public static function downloadStoryBatch(array $sids, array $story_versions, array &$context) {
     $message = 'Downloading story...';
     $apiService = \Drupal::service('shorthand_api');
     $file_system = \Drupal::service('file_system');
 
     $results = [];
     $stories = [];
-    $storiesApi = $apiService->getStories();
-    foreach ($storiesApi as $storyApi) {
-      $stories[$storyApi['id']] = $storyApi['updated'];
+    foreach ($story_versions as $story_id => $updated) {
+      if (!empty($updated)) {
+        $stories[$story_id] = $updated;
+      }
+    }
+
+    if (empty($stories)) {
+      $storiesApi = $apiService->getStories();
+      if (is_array($storiesApi)) {
+        foreach ($storiesApi as $storyApi) {
+          $stories[$storyApi['id']] = $storyApi['updated'];
+        }
+      }
     }
 
     foreach ($sids as $sid) {
       $file = $apiService->getStory($sid, []);
       $filepath = $file_system->realpath($file);
 
-      $timestamp = $stories[$sid];
+      $timestamp = $stories[$sid] ?? date('c');
       $destination_uri = 'public://' . static::SHORTHAND_STORY_BASE_PATH . '/' . $sid . '/' . $timestamp;
       $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY);
       $destination_path = $file_system->realpath($destination_uri);
@@ -169,14 +203,38 @@ class RemoteCollectionController extends ControllerBase {
    */
   public function list() {
     $rows = [];
-    $stories = $this->shorthandApi->getStories();
+    $request = $this->requestStack->getCurrentRequest();
+    $keyword = trim((string) $request->query->get('keyword', ''));
+    $cursor = trim((string) $request->query->get('cursor', ''));
+    $limit = (int) $request->query->get('limit', self::DEFAULT_STORIES_LIMIT);
+    if ($limit <= 0) {
+      $limit = self::DEFAULT_STORIES_LIMIT;
+    }
+    $limit = min($limit, self::MAX_STORIES_LIMIT);
 
-    if (is_array($stories) && count($stories) === 0) {
-      $this->messenger->addWarning($this->t('There are no stories to retrieve from Shorthand.'));
+    $story_query = [
+      'limit' => $limit + 1,
+    ];
+    if ($cursor !== '') {
+      $story_query['cursor'] = $cursor;
+    }
+    if ($keyword !== '') {
+      $story_query['keyword'] = $keyword;
     }
 
-    if (!$stories) {
+    $stories = $this->shorthandApi->getStories($story_query);
+
+    if ($stories === FALSE) {
       return [];
+    }
+
+    $has_next_page = count($stories) > $limit;
+    if ($has_next_page) {
+      $stories = array_slice($stories, 0, $limit);
+    }
+
+    if (count($stories) === 0) {
+      $this->messenger->addWarning($this->t('There are no stories to retrieve from Shorthand.'));
     }
 
     // List downloaded stories.
@@ -195,9 +253,39 @@ class RemoteCollectionController extends ControllerBase {
     $localStories = array_keys($storyFolders);
 
     $input = [
-      '#type' => 'textfield',
-      '#id' => 'story_filter',
-      '#placeholder' => $this->t('Filter Stories'),
+      '#type' => 'form',
+      '#method' => 'get',
+      '#action' => Url::fromRoute('shorthand.remote_collection')->toString(),
+      '#attributes' => [
+        'class' => ['shorthand-story-filter-form'],
+      ],
+      'keyword' => [
+        '#type' => 'search',
+        '#id' => 'story_filter',
+        '#name' => 'keyword',
+        '#title' => $this->t('Search stories'),
+        '#title_display' => 'invisible',
+        '#default_value' => $keyword,
+        '#placeholder' => $this->t('Search stories'),
+      ],
+      'limit' => [
+        '#type' => 'select',
+        '#name' => 'limit',
+        '#title' => $this->t('Stories per page'),
+        '#options' => [
+          50 => 50,
+          100 => 100,
+          250 => 250,
+        ],
+        '#default_value' => $limit,
+      ],
+      'actions' => [
+        '#type' => 'actions',
+        'submit' => [
+          '#type' => 'submit',
+          '#value' => $this->t('Search'),
+        ],
+      ],
     ];
 
     foreach ($stories as $story) {
@@ -225,23 +313,90 @@ class RemoteCollectionController extends ControllerBase {
         }
       }
 
+      if ($type === 'link') {
+        $action = [
+          '#title' => $title,
+          '#type' => 'link',
+          '#url' => Url::fromRoute('shorthand.download.story', [
+            'storyid' => $story['id'],
+          ], [
+            'query' => [
+              'updated' => $story['updated'],
+            ],
+          ]),
+        ];
+      }
+      else {
+        $action = [
+          '#markup' => $title,
+        ];
+      }
+
       $story['actions'] = [
         'data' => [
           'label' => [
             'data' => [
-              'link' => [
-                '#title' => $title,
-                '#type' => $type,
-                '#url' => Url::fromRoute('shorthand.download.story', [
-                  'storyid' => $story['id'],
-                ]),
-              ],
+              'link' => $action,
             ],
           ],
         ],
       ];
 
       $rows[] = $story;
+    }
+
+    $pagination = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['shorthand-story-pagination'],
+      ],
+    ];
+
+    if ($cursor !== '') {
+      $first_query = [
+        'limit' => $limit,
+      ];
+      if ($keyword !== '') {
+        $first_query['keyword'] = $keyword;
+      }
+
+      $pagination['first'] = [
+        '#type' => 'link',
+        '#title' => $this->t('First page'),
+        '#url' => Url::fromRoute('shorthand.remote_collection', [], [
+          'query' => $first_query,
+        ]),
+        '#attributes' => [
+          'class' => ['button'],
+        ],
+      ];
+    }
+
+    if ($has_next_page) {
+      $last_story = end($stories);
+      if (!empty($last_story['updated']) && !empty($last_story['id'])) {
+        $next_query = [
+          'limit' => $limit,
+          'cursor' => base64_encode(json_encode([
+            'updatedAt' => $last_story['updated'],
+            'id' => $last_story['id'],
+          ])),
+        ];
+        if ($keyword !== '') {
+          $next_query['keyword'] = $keyword;
+        }
+
+        $pagination['next'] = [
+          '#type' => 'link',
+          '#title' => $this->t('Next page'),
+          '#url' => Url::fromRoute('shorthand.remote_collection', [], [
+            'query' => $next_query,
+          ]),
+          '#attributes' => [
+            'class' => ['button'],
+          ],
+        ];
+      }
     }
 
     $header = [
@@ -268,6 +423,7 @@ class RemoteCollectionController extends ControllerBase {
           ],
           '#header_columns' => 4,
         ],
+        'pagination' => $pagination,
       ],
       '#attached' => [
         'library' => [
@@ -293,6 +449,8 @@ class RemoteCollectionController extends ControllerBase {
       throw new AccessDeniedHttpException();
     }
 
+    $updated = (string) $this->requestStack->getCurrentRequest()->query->get('updated', '');
+
     $batch = [
       'title' => $this->t('Downloading story...'),
       'init_message' => $this->t('Downloading story...'),
@@ -300,7 +458,7 @@ class RemoteCollectionController extends ControllerBase {
       'operations' => [
         [
           [self::class, 'downloadStoryBatch'],
-          [[$storyid]],
+          [[$storyid], [$storyid => $updated]],
         ],
       ],
       'finished' => [self::class, 'downloadStoryComplete'],

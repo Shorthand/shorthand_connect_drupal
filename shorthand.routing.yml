@@ -24,3 +24,23 @@ shorthand.download.story:
     _csrf_token: 'TRUE'
   options:
     _admin_route: TRUE
+
+shorthand.story_autocomplete:
+  path: '/admin/content/shorthand/autocomplete'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\StoryAutocompleteController::stories'
+  requirements:
+    _permission: 'access shorthand story overview'
+  options:
+    _admin_route: TRUE
+
+shorthand.local_thumbnail:
+  path: '/admin/content/shorthand/local-thumbnail/{story_id}/{version_id}'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\LocalThumbnailController::thumbnail'
+  requirements:
+    _permission: 'access shorthand story overview'
+    story_id: '[^/]+'
+    version_id: '[^/]+'
+  options:
+    _admin_route: TRUE

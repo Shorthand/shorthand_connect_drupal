@@ -7,3 +7,9 @@ shorthand.settings:
     shorthand_token:
       type: string
       label: 'Shorthand API token'
+    request_timeout:
+      type: integer
+      label: 'Shorthand request timeout'
+    input_format:
+      type: string
+      label: 'Text field format'

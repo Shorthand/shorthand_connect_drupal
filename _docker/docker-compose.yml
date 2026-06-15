@@ -1,14 +1,14 @@
   services:
     # Postgres
     db:
-      image: postgres:latest
+      image: postgres:18
       restart: always
       environment:
         POSTGRES_DB: drupaldb
         POSTGRES_USER: drupaluser
         POSTGRES_PASSWORD: drupalpassword
       volumes:
-        - db_data:/var/lib/postgresql/data
+        - db_data:/var/lib/postgresql
       ports:
         - 5432:5432
     

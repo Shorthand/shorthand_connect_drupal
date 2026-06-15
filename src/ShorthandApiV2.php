@@ -9,13 +9,17 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\ConnectException;
 use Psr\Log\LoggerInterface;
 
 /**
- * Class for Shorthand's API handling.
+ * Class for Shorthand's API handling (Versioning to be deprecated).
+ *
+ * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0.
+ * Use ShorthandApi class.
+ *
+ * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
-class ShorthandApi implements ShorthandApiInterface {
+class ShorthandApiV2 implements ShorthandApiInterface {
 
   use StringTranslationTrait;
 
@@ -67,6 +71,11 @@ class ShorthandApi implements ShorthandApiInterface {
    *   The logger instance.
    * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory instance.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi class.
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   public function __construct(Client $http_client, FileSystemInterface $file_system, MessengerInterface $messenger, LoggerInterface $logger, ConfigFactoryInterface $config_factory) {
     $this->config = $config_factory;
@@ -78,28 +87,62 @@ class ShorthandApi implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getProfile().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
-  public function validateApiKey($token) {
+  public function getProfile() {
+    // @todo Implement getProfile() method.
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getPublishingConfigurations().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   */
+  public function getPublishingConfigurations() {
+
+    $configs = [];
+
     try {
-      $this->httpClient->get('v2/token-info/', [
+      $response = $this->httpClient->get('v2/publish-configurations', [
         'base_uri' => $this->getBaseUri(),
-        'headers' => $this->buildHeaders($token),
+        'headers' => $this->buildHeaders(),
         'timeout' => $this->config->get('shorthand.settings')
           ->get('request_timeout'),
         'verify' => $this->shouldVerifySsl(),
       ]);
-    }
-    catch (\Exception $error) {
-      $message = $this->t('<strong>Error validating API key</strong>. Details: <pre>@error</pre>', [
-        '@error' => $error->getMessage(),
-      ]);
-      $this->messenger->addError($message);
-      $this->logger->error($message);
 
+      $decoded = Json::decode((string) $response->getBody());
+
+      if (isset($decoded)) {
+        foreach ($decoded as $configdata) {
+          $config = [
+            'name' => $configdata['name'],
+            'id' => $configdata['id'],
+            'description' => $configdata['description'],
+            'baseUrl' => $configdata['baseUrl'],
+          ];
+          $configs[] = $config;
+        }
+      }
+
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', ['@message' => $message]));
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
       return FALSE;
     }
 
-    return TRUE;
+    return $configs;
+
   }
 
   /**
@@ -107,6 +150,11 @@ class ShorthandApi implements ShorthandApiInterface {
    *
    * @return string
    *   Shorthand API base url.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getBaseUri().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   protected function getBaseUri() {
     return rtrim(self::SHORTHAND_API_URL, '/') . '/';
@@ -125,21 +173,17 @@ class ShorthandApi implements ShorthandApiInterface {
   /**
    * Build request headers, including authentication parameters.
    *
-   * @param string $token
-   *   Header token.
-   *
    * @return array
-   *   Header parameter array.
+   *   Headers parameters array.
    *
-   * @throws \Exception
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:buildHeaders().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   protected function buildHeaders($token = NULL) {
     $config = $this->config->get('shorthand.settings');
-    $config_token = $config->get('shorthand_token') ?? NULL;
-    if (!$token && !$config_token) {
-      throw new \Exception('A valid Shorthand token is required');
-    }
-
+    $config_token = $config->get('shorthand_token');
     return [
       'Authorization' => ' Token ' . ($token ?? $config_token),
       'Content-Type' => 'application/json; charset=utf-8',
@@ -148,58 +192,11 @@ class ShorthandApi implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
-   */
-  public function getProfile() {
-    // @todo Implement getProfile() method.
-    return [];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getPublishingConfigurations() {
-
-    $configurations = [];
-
-    try {
-      $response = $this->httpClient->get('v2/publish-configurations', [
-        'base_uri' => $this->getBaseUri(),
-        'headers' => $this->buildHeaders(),
-        'timeout' => $this->config->get('shorthand.settings')
-          ->get('request_timeout'),
-        'verify' => $this->shouldVerifySsl(),
-      ]);
-
-      $decoded = Json::decode((string) $response->getBody());
-
-      if (isset($decoded)) {
-        foreach ($decoded as $configData) {
-          $config = [
-            'name' => $configData['name'],
-            'id' => $configData['id'],
-            'description' => $configData['description'],
-            'baseUrl' => $configData['baseUrl'],
-          ];
-          $configurations[] = $config;
-        }
-      }
-
-    }
-    catch (BadResponseException | \Exception $error) {
-      $message = $error->getMessage();
-      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', [
-        '@message' => $message,
-      ]));
-      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
-      return FALSE;
-    }
-
-    return $configurations;
-
-  }
-
-  /**
-   * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStories().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   public function getStories(array $params = []) {
 
@@ -215,6 +212,7 @@ class ShorthandApi implements ShorthandApiInterface {
       ]);
 
       $decoded = Json::decode((string) $response->getBody());
+
       if (isset($decoded)) {
         foreach ($decoded as $storydata) {
           $story = [
@@ -226,21 +224,17 @@ class ShorthandApi implements ShorthandApiInterface {
               'keywords' => '' . $storydata['keywords'],
             ],
             'title' => $storydata['title'],
-            'status' => $storydata['status'],
-            'published' => $storydata['lastPublishedAt'],
-            'updated' => $storydata['updatedAt'],
             'external_url' => '' . $storydata['url'],
-            'api_version' => '' . $storydata['version'],
+            'story_version' => '' . $storydata['version'],
           ];
           $stories[] = $story;
         }
       }
+
     }
-    catch (BadResponseException | ConnectException | \Exception $error) {
+    catch (BadResponseException $error) {
       $message = $error->getMessage();
-      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', [
-        '@message' => $message,
-      ]));
+      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', ['@message' => $message]));
       $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
       return FALSE;
     }
@@ -251,6 +245,11 @@ class ShorthandApi implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStory().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   public function getStory($id, $params) {
 
@@ -265,11 +264,9 @@ class ShorthandApi implements ShorthandApiInterface {
         'verify' => $this->shouldVerifySsl(),
       ]);
     }
-    catch (BadResponseException | \Exception $error) {
+    catch (BadResponseException $error) {
       $message = $error->getMessage();
-      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', [
-        '@message' => $message,
-      ]));
+      $this->messenger->addError($message);
       $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
     }
 
@@ -281,6 +278,11 @@ class ShorthandApi implements ShorthandApiInterface {
    *
    * @return string
    *   Path.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:getStoryFileTempPath().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   protected function getStoryFileTempPath() {
     return $this->fileSystem->getTempDirectory() . DIRECTORY_SEPARATOR . uniqid('shorthand-') . '.zip';
@@ -288,34 +290,42 @@ class ShorthandApi implements ShorthandApiInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:publishAssets().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   public function publishAssets($id, $config) {
-
+    $request = NULL;
     try {
-      $this->httpClient->post('v2/stories/' . $id . '/publish', [
+      $request = $this->httpClient->post('v2/stories/' . $id . '/publish', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
         'body' => json_encode($this->buildBody($config->id)),
-        'timeout' => $this->config->get('shorthand.settings')->get('request_timeout'),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
         'verify' => $this->shouldVerifySsl(),
       ]);
     }
-    catch (BadResponseException | \Exception $error) {
+    catch (BadResponseException $error) {
       $message = $error->getMessage();
-      $this->messenger->addError($this->t('Server returned the following error: <em>@message</em>. Please check your settings or view log for more details.', [
-        '@message' => $message,
-      ]));
+      $this->messenger->addError($message);
+      $this->messenger->addError($request);
       $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
-      return FALSE;
     }
-
   }
 
   /**
    * Build request body for external publishing.
    *
    * @return array
-   *   Response body as array.
+   *   Body array.
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:buildBody().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   protected function buildBody($config) {
     return [
@@ -323,6 +333,34 @@ class ShorthandApi implements ShorthandApiInterface {
       'url' => '',
       "publishSubset" => "assets_only",
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
+   *   ShorthandApi:validateApiKey().
+   *
+   * @see https://www.drupal.org/project/shorthand/issues/3250535
+   */
+  public function validateApiKey($token) {
+    try {
+      $this->httpClient->get('v2/token-info/', [
+        'base_uri' => $this->getBaseUri(),
+        'headers' => $this->buildHeaders($token),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
+      ]);
+    }
+    catch (BadResponseException $error) {
+      $message = $error->getMessage();
+      $this->messenger->addError($message);
+      $this->logger->error('<strong>' . $message . '</strong><br />' . $error->getTraceAsString());
+      return FALSE;
+    }
+
+    return TRUE;
   }
 
 }

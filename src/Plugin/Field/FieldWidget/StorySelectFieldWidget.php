@@ -7,7 +7,6 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\shorthand\ShorthandApiInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,22 +27,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
   /**
-   * Shorthand Api service.
-   *
-   * @var \Drupal\shorthand\ShorthandApiInterface
-   *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
-   *
-   * @see https://www.drupal.org/project/shorthand/issues/3274487
+   * Valid Shorthand story ID pattern.
    */
-  protected $shorthandApi;
-
-  /**
-   * The array of stories.
-   *
-   * @var array
-   */
-  protected $shorthandStories;
+  const STORY_ID_PATTERN = '[A-Za-z0-9_-]+';
 
   /**
    * {@inheritdoc}
@@ -52,10 +38,8 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    *
    * @see https://www.drupal.org/project/shorthand/issues/3274487
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-    $this->shorthandApi = $shorthandApi;
-    $this->shorthandStories = $this->shorthandApi->getStories();
   }
 
   /**
@@ -71,8 +55,7 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
       $plugin_definition,
       $configuration['field_definition'],
       $configuration['settings'],
-      $configuration['third_party_settings'],
-      $container->get('shorthand.api.v2')
+      $configuration['third_party_settings']
     );
   }
 
@@ -85,37 +68,51 @@ class StorySelectFieldWidget extends WidgetBase implements ContainerFactoryPlugi
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element['value'] = $element + [
-      '#type' => 'select',
+      '#type' => 'textfield',
       '#default_value' => $items[$delta]->value ?? NULL,
-      '#options' => $this->buildStoriesList(),
-      '#suffix' => '<div id="shorthand-stories-data" hidden>' . json_encode($this->shorthandStories) . '</div>',
+      '#autocomplete_route_name' => 'shorthand.story_autocomplete',
+      '#element_validate' => [
+        [static::class, 'validateStoryValue'],
+      ],
+      '#description' => $this->t('Start typing to search Shorthand stories.'),
     ];
 
     return $element;
   }
 
   /**
-   * Return Shorthand stories.
-   *
-   * @return array
-   *   Array of Shorthand stories, keyed by Story ID.
-   *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
-   *
-   * @see https://www.drupal.org/project/shorthand/issues/3274487
+   * {@inheritdoc}
    */
-  protected function buildStoriesList() {
-    if (($stories = $this->shorthandStories) !== FALSE) {
-      $list = [];
-      foreach ($stories as $story) {
-        $list[$story['id']] = $story['title'];
+  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
+    $autocomplete_id_pattern = '/\((' . self::STORY_ID_PATTERN . ')\)$/';
+    foreach ($values as &$value) {
+      $value['value'] = trim((string) ($value['value'] ?? ''));
+      if (!empty($value['value']) && preg_match($autocomplete_id_pattern, $value['value'], $matches)) {
+        $value['value'] = $matches[1];
       }
     }
-    else {
-      $list = [0 => 'Cannot retrieve stories'];
+    return $values;
+  }
+
+  /**
+   * Validate the autocomplete value before it is saved.
+   *
+   * Selected autocomplete values are stored as "Title (story_id)"; existing
+   * saved field values are stored as the raw story ID.
+   */
+  public static function validateStoryValue(array &$element, FormStateInterface $form_state, array &$form) {
+    $value = trim((string) $element['#value']);
+    if ($value === '') {
+      return;
     }
 
-    return $list;
+    $autocomplete_id_pattern = '/\((' . self::STORY_ID_PATTERN . ')\)$/';
+    $raw_id_pattern = '/^' . self::STORY_ID_PATTERN . '$/';
+    if (preg_match($autocomplete_id_pattern, $value) || preg_match($raw_id_pattern, $value)) {
+      return;
+    }
+
+    $form_state->setError($element, \Drupal::translation()->translate('Select a Shorthand story from the autocomplete suggestions, or enter a valid story ID.'));
   }
 
 }

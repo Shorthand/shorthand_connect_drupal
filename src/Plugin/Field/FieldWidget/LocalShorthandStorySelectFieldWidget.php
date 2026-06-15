@@ -5,13 +5,14 @@ namespace Drupal\shorthand\Plugin\Field\FieldWidget;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Url;
+use Drupal\Component\Serialization\Json;
+use Drupal\Component\Utility\Html;
 use Drupal\shorthand\Controller\RemoteCollectionController;
-use Drupal\shorthand\ShorthandApiInterface;
-use GuzzleHttp\Exception\ConnectException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,13 +29,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class LocalShorthandStorySelectFieldWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
   /**
-   * Shorthand Api service.
-   *
-   * @var \Drupal\shorthand\ShorthandApiInterface
-   */
-  protected $shorthandApi;
-
-  /**
    * The file system service.
    *
    * @var \Drupal\Core\File\FileSystemInterface
@@ -42,18 +36,18 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
   protected $fileSystem;
 
   /**
-   * The renderer.
+   * The file URL generator service.
    *
-   * @var \Drupal\Core\Render\RendererInterface
+   * @var \Drupal\Core\File\FileUrlGeneratorInterface
    */
-  protected $renderer;
+  protected $fileUrlGenerator;
 
   /**
-   * List of stories.
+   * List of locally downloaded stories.
    *
    * @var array
    */
-  protected $shorthandStories;
+  protected $shorthandStories = [];
 
   /**
    * The constructor method.
@@ -68,19 +62,15 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    *   The widget settings.
    * @param array $third_party_settings
    *   Any third party settings.
-   * @param \Drupal\shorthand\ShorthandApiInterface $shorthandApi
-   *   The shorthand api connector.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer service.
    * @param \Drupal\Core\File\FileSystemInterface $file_system
    *   The file system service.
+   * @param \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator
+   *   The file URL generator service.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ShorthandApiInterface $shorthandApi, RendererInterface $renderer, FileSystemInterface $file_system) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, FileSystemInterface $file_system, FileUrlGeneratorInterface $file_url_generator) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-    $this->shorthandApi = $shorthandApi;
     $this->fileSystem = $file_system;
-    $this->shorthandStories = $this->shorthandApi->getStories();
-    $this->renderer = $renderer;
+    $this->fileUrlGenerator = $file_url_generator;
   }
 
   /**
@@ -93,9 +83,8 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
       $configuration['field_definition'],
       $configuration['settings'],
       $configuration['third_party_settings'],
-      $container->get('shorthand_api'),
-      $container->get('renderer'),
-      $container->get('file_system')
+      $container->get('file_system'),
+      $container->get('file_url_generator')
     );
   }
 
@@ -112,7 +101,7 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
           'shorthand/shorthandSelectionForm',
         ],
       ],
-      '#suffix' => '<div id="shorthand-stories-data">' . json_encode($this->shorthandStories) . '</div>',
+      '#suffix' => '<div id="shorthand-stories-data">' . Html::escape(Json::encode($this->shorthandStories)) . '</div>',
     ];
 
     return $element;
@@ -141,25 +130,6 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
     ]);
 
     $stories = [];
-    try {
-      $shorthandStories = $this->shorthandStories;
-      if ($shorthandStories) {
-        foreach ($shorthandStories as $story) {
-          $stories[$story['id']] = [
-            'title' => $story['title'],
-            'versions' => [],
-            'id' => $story['id'],
-            'image' => $story['image'],
-            'published' => $story['published'],
-            'updated' => $story['updated'],
-            'status' => $story['status'],
-          ];
-        }
-      }
-    }
-    catch (ConnectException $error) {
-    }
-
     foreach (array_keys($storyFolders) as $story_id) {
       $storyVersionFolders = $this->fileSystem->scanDirectory($destination_uri . '/' . $story_id, '/.*/', [
         'recurse' => FALSE,
@@ -167,59 +137,152 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
       ]);
 
       foreach (array_keys($storyVersionFolders) as $version_id) {
-        if (in_array($story_id, array_keys($stories))) {
-          $options[$story_id . '/' . $version_id] =
-            $stories[$story_id]['title'] . ' @ ' . $version_id ?? ($story_id . '/' . $version_id);
-          array_push($stories[$story_id]['versions'], $version_id);
+        $story_version_uri = $destination_uri . '/' . $story_id . '/' . $version_id;
+        if (!isset($stories[$story_id])) {
+          $stories[$story_id] = $this->buildLocalStoryData($story_id, $version_id, $story_version_uri);
+        }
+        $options[$story_id . '/' . $version_id] = $stories[$story_id]['title'] . ' @ ' . $version_id;
+      }
+    }
+
+    $this->shorthandStories = array_values($stories);
+
+    if (count($options) === 1) {
+      $options = [0 => 'No local stories found. Head to content > shorthand stories (remote).'];
+    }
+
+    return $options;
+  }
+
+  /**
+   * Build story metadata from a downloaded local story version.
+   *
+   * @param string $story_id
+   *   The Shorthand story ID.
+   * @param string $version_id
+   *   The local story version ID.
+   * @param string $story_version_uri
+   *   The local story version URI.
+   *
+   * @return array
+   *   Story data shaped for shorthand-selection-form.js.
+   */
+  protected function buildLocalStoryData($story_id, $version_id, $story_version_uri) {
+    $metadata = $this->extractHeadMetadata($story_version_uri . '/head.html');
+    return [
+      'id' => $story_id,
+      'title' => $metadata['title'] ?: $story_id,
+      'image' => $this->resolveLocalImageUrl($metadata['image'], $story_version_uri),
+      'thumbnail_route' => Url::fromRoute('shorthand.local_thumbnail', [
+        'story_id' => $story_id,
+        'version_id' => $version_id,
+      ])->toString(),
+      'status' => $this->t('Downloaded')->render(),
+      'metadata' => [
+        'description' => $metadata['description'],
+      ],
+    ];
+  }
+
+  /**
+   * Extract story metadata from a downloaded head.html file.
+   *
+   * @param string $head_uri
+   *   The local head.html URI.
+   *
+   * @return array
+   *   Extracted metadata.
+   */
+  protected function extractHeadMetadata($head_uri) {
+    $metadata = [
+      'title' => '',
+      'description' => '',
+      'image' => '',
+    ];
+
+    if (!file_exists($head_uri)) {
+      return $metadata;
+    }
+
+    $head = file_get_contents($head_uri);
+    $meta = [];
+    if (preg_match_all('/<meta\s+[^>]*>/i', $head, $tags)) {
+      foreach ($tags[0] as $tag) {
+        $attributes = $this->parseHtmlAttributes($tag);
+        $name = strtolower($attributes['property'] ?? $attributes['name'] ?? '');
+        if ($name !== '' && isset($attributes['content'])) {
+          $meta[$name] = $attributes['content'];
         }
       }
     }
 
-    $local_stories = array_filter($stories, function ($story) {
-      return count($story['versions']) > 0;
-    });
+    $metadata['title'] = $meta['og:title'] ?? $meta['twitter:title'] ?? '';
+    $metadata['description'] = $meta['og:description'] ?? $meta['description'] ?? $meta['twitter:description'] ?? '';
+    $metadata['image'] = $meta['og:image'] ?? $meta['twitter:image'] ?? '';
 
-    if (empty($options)) {
-      $options = [0 => 'No local stories found. Head to content > shorthand stories (remote).'];
+    if ($metadata['title'] === '' && preg_match('/<title[^>]*>(.*?)<\/title>/is', $head, $matches)) {
+      $metadata['title'] = html_entity_decode(strip_tags($matches[1]), ENT_QUOTES | ENT_HTML5);
     }
 
-    $story_panels = [];
+    return $metadata;
+  }
 
-    foreach ($local_stories as $story) {
-      $url = $story['image'];
-      $title = $story['title'];
-      $image_variables = [
-        '#theme' => 'image',
-        '#uri' => $url,
-        '#alt' => $title,
-        '#title' => $title,
-        '#attributes' => [
-          'class' => ['shorthand-story-image'],
-        ],
-      ];
-      $story['image_tag'] = $this->renderer->render($image_variables);
+  /**
+   * Parse simple HTML tag attributes.
+   *
+   * @param string $tag
+   *   The HTML tag.
+   *
+   * @return array
+   *   Attribute values keyed by lowercase attribute name.
+   */
+  protected function parseHtmlAttributes($tag) {
+    $attributes = [];
+    if (preg_match_all('/([a-zA-Z_:.-]+)\s*=\s*(["\'])(.*?)\2/s', $tag, $matches, PREG_SET_ORDER)) {
+      foreach ($matches as $match) {
+        $attributes[strtolower($match[1])] = html_entity_decode($match[3], ENT_QUOTES | ENT_HTML5);
+      }
+    }
+    return $attributes;
+  }
 
-      $story_panels[] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['shorthand-story'],
-          'data-storyid' => $story['id'],
-          'data-storyoption' => $story['id'] . "/" . $story['versions'][0],
-          'data-storytitle' => $story['title'],
-          'data-storystatus' => $story['status'],
-        ],
-        'content' => [
-          'story_image' => [
-            '#markup' => $story['image_tag'],
-          ],
-          'story_title' => [
-            '#markup' => '<span>' . $story['title'] . '</span>',
-          ],
-        ],
-      ];
+  /**
+   * Resolve a metadata image URL for use in the local selector.
+   *
+   * @param string $image
+   *   The image URL extracted from metadata.
+   * @param string $story_version_uri
+   *   The local story version URI.
+   *
+   * @return string
+   *   A URL suitable for an image src.
+   */
+  protected function resolveLocalImageUrl($image, $story_version_uri) {
+    if ($image === '') {
+      return '';
     }
 
-    return $options;
+    $relative_path = '';
+    if (preg_match('/^https?:\/\//i', $image)) {
+      $path = parse_url($image, PHP_URL_PATH) ?: '';
+      $assets_position = strpos($path, '/assets/');
+      if ($assets_position !== FALSE) {
+        $relative_path = substr($path, $assets_position + 1);
+      }
+    }
+    else {
+      $relative_path = preg_replace('#^\./#', '', $image);
+    }
+
+    if ($relative_path !== '') {
+      $relative_path = rawurldecode($relative_path);
+      $local_uri = $story_version_uri . '/' . $relative_path;
+      if (file_exists($local_uri)) {
+        return $this->fileUrlGenerator->generateString($local_uri);
+      }
+    }
+
+    return $image;
   }
 
 }

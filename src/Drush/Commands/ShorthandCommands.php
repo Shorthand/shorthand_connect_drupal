@@ -72,8 +72,8 @@ class ShorthandCommands extends DrushCommands {
     if ($nodes) {
       foreach ($nodes as $node) {
         $parts = explode('/', $node->field_shorthand->value);
-        if (count($parts)) {
-          $usedShorthands[$parts[0]] = $parts[1];
+        if (count($parts) >= 2) {
+          $usedShorthands[$parts[0]][$parts[1]] = TRUE;
         }
       }
     }
@@ -98,8 +98,8 @@ class ShorthandCommands extends DrushCommands {
         ]));
       }
       else {
-        foreach ($storyVariants as $storyVariant => $data) {
-          if ($storyVariant != $usedShorthands[$story]) {
+        foreach (array_keys($storyVariants) as $storyVariant) {
+          if (empty($usedShorthands[$story][$storyVariant])) {
             $folder = $destination_uri . '/' . $story . '/' . $storyVariant;
             $this->fileSystem->deleteRecursive($folder);
             $this->writeln($this->t('Removed shorthand: @title @version', [

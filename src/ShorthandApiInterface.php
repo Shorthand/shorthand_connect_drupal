@@ -8,6 +8,16 @@ namespace Drupal\shorthand;
 interface ShorthandApiInterface {
 
   /**
+   * Shorthand API URL.
+   */
+  const SHORTHAND_API_URL = 'https://api.shorthand.com/';
+
+  /**
+   * Whether API requests should verify SSL certificates.
+   */
+  const SHORTHAND_API_VERIFY_SSL = TRUE;
+
+  /**
    * Get profile data.
    *
    * @return array
@@ -18,10 +28,13 @@ interface ShorthandApiInterface {
   /**
    * Get stories.
    *
+   * @param array $params
+   *   Optional query parameters to pass to the Shorthand API.
+   *
    * @return array|bool
    *   Stories from Shorthand or FALSE if not able to retrieve.
    */
-  public function getStories();
+  public function getStories(array $params = []);
 
   /**
    * Download the story files and return the .zip file URI.

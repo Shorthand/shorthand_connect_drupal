@@ -229,3 +229,27 @@ function shorthand_update_9001() {
     ->set('shorthand_token', $config->get('token'))
     ->save();
 }
+
+/**
+ * Move current configuration values to their runtime property names.
+ */
+function shorthand_update_9002() {
+  $config = \Drupal::configFactory()
+    ->getEditable('shorthand.settings');
+
+  if ($config->get('request_timeout') === NULL && $config->get('shorthand_request_timeout') !== NULL) {
+    $config->set('request_timeout', $config->get('shorthand_request_timeout'));
+  }
+  if ($config->get('shorthand_request_timeout') !== NULL) {
+    $config->clear('shorthand_request_timeout');
+  }
+
+  if ($config->get('input_format') === NULL && $config->get('shorthand_input_format') !== NULL) {
+    $config->set('input_format', $config->get('shorthand_input_format'));
+  }
+  if ($config->get('shorthand_input_format') !== NULL) {
+    $config->clear('shorthand_input_format');
+  }
+
+  $config->save();
+}

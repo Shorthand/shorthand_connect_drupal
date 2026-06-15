@@ -528,9 +528,27 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     }
     $content = str_replace('./static/', $assets_path . '/static/', $content);
     $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
-    $content = str_replace('http://', 'https://', $content);
+    $content = $this->upgradeHttpUrlAttributes($content);
 
     return $content;
+  }
+
+  /**
+   * Upgrade insecure URLs only when they appear in URL-bearing attributes.
+   *
+   * @param string $content
+   *   Shorthand Story's HTML markup to be processed.
+   *
+   * @return string
+   *   Processed content.
+   */
+  protected function upgradeHttpUrlAttributes($content) {
+    $url_attribute_pattern = '/\b('
+      . '(?:src|href|poster|action|formaction|data-[a-z0-9_-]+)'
+      . '\s*=\s*)(["\'])http:\/\//i';
+    return preg_replace_callback($url_attribute_pattern, function ($matches) {
+      return $matches[1] . $matches[2] . 'https://';
+    }, $content);
   }
 
   /**

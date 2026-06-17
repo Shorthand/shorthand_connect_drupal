@@ -7,6 +7,3 @@ shorthand.settings:
     shorthand_token:
       type: string
       label: 'Shorthand API token'
-    keep_previous_versions:
-      type: boolean
-      label: 'Keep previously downloaded versions'

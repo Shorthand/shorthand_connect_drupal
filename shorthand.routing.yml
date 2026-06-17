@@ -24,35 +24,3 @@ shorthand.download.story:
     _csrf_token: 'TRUE'
   options:
     _admin_route: TRUE
-
-shorthand.delete.story_version:
-  path: '/admin/content/shorthand/delete/{storyid}/{version}'
-  defaults:
-    _controller: '\Drupal\shorthand\Controller\RemoteCollectionController::deleteStoryVersion'
-    _title: 'Delete shorthand story version'
-  requirements:
-    _permission: 'delete shorthand content'
-    _csrf_token: 'TRUE'
-  options:
-    _admin_route: TRUE
-
-shorthand.delete.unused_versions:
-  path: '/admin/content/shorthand/delete-unused'
-  defaults:
-    _form: '\Drupal\shorthand\Form\DeleteUnusedVersionsConfirmForm'
-    _title: 'Delete unused shorthand versions'
-  requirements:
-    _permission: 'delete shorthand content'
-  options:
-    _admin_route: TRUE
-
-shorthand.manage_story_versions:
-  path: '/admin/content/shorthand/versions/{storyid}'
-  defaults:
-    _form: '\Drupal\shorthand\Form\StoryVersionsDeleteForm'
-    _title: 'Manage shorthand versions'
-  requirements:
-    _permission: 'delete shorthand content'
-    _csrf_token: 'TRUE'
-  options:
-    _admin_route: TRUE

@@ -33,22 +33,3 @@ if (storyFilter) {
     filterStories(filter.toLowerCase());
   });
 }
-
-document.addEventListener('change', (event) => {
-  const selectAll = event.target.closest('.shorthand-version-delete-form .shorthand-select-all');
-  if (!selectAll) {
-    return;
-  }
-
-  const form = selectAll.closest('form');
-  if (!form) {
-    return;
-  }
-
-  const options = form.querySelectorAll('.shorthand-version-options input[type="checkbox"]');
-  options.forEach((option) => {
-    if (!option.disabled) {
-      option.checked = selectAll.checked;
-    }
-  });
-});

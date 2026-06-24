@@ -291,13 +291,24 @@ class RemoteCollectionController extends ControllerBase {
     foreach ($stories as $story) {
       unset($story['metadata'], $story['api_version']);
 
-      $image_variables = [
-        '#theme' => 'image',
-        '#uri' => $story['image'],
-        '#alt' => $story['title'],
-        '#title' => $story['title'],
-        '#attributes' => ['class' => ['shorthand-story-image']],
-      ];
+      if (!empty($story['image'])) {
+        $image_variables = [
+          '#theme' => 'image',
+          '#uri' => $story['image'],
+          '#alt' => $story['title'],
+          '#title' => $story['title'],
+          '#attributes' => ['class' => ['shorthand-story-image']],
+        ];
+      }
+      else {
+        $image_variables = [
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => ['shorthand-story-image-placeholder'],
+            'aria-hidden' => 'true',
+          ],
+        ];
+      }
       $story['image'] = $this->renderer->render($image_variables);
 
       $title = $this->t('Download story');

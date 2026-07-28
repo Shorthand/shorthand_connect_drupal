@@ -185,6 +185,7 @@ class RemoteCollectionController extends ControllerBase {
       $message = 'Finished with an error.';
     }
 
+    \Drupal::service('shorthand.local_story_index')->invalidate();
     \Drupal::messenger()->addStatus($message);
   }
 

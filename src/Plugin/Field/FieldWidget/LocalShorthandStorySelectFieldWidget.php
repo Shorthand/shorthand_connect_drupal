@@ -2,17 +2,16 @@
 
 namespace Drupal\shorthand\Plugin\Field\FieldWidget;
 
+use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
-use Drupal\Core\File\FileUrlGeneratorInterface;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Url;
-use Drupal\Component\Serialization\Json;
-use Drupal\Component\Utility\Html;
-use Drupal\shorthand\Controller\RemoteCollectionController;
+use Drupal\shorthand\LocalStoryIndex;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,25 +28,23 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class LocalShorthandStorySelectFieldWidget extends WidgetBase implements ContainerFactoryPluginInterface {
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
+   * Valid Shorthand story ID pattern.
    */
-  protected $fileSystem;
+  const STORY_ID_PATTERN = '[A-Za-z0-9_-]+';
 
   /**
-   * The file URL generator service.
+   * The local story index.
    *
-   * @var \Drupal\Core\File\FileUrlGeneratorInterface
+   * @var \Drupal\shorthand\LocalStoryIndex
    */
-  protected $fileUrlGenerator;
+  protected $localStoryIndex;
 
   /**
-   * List of locally downloaded stories.
+   * The date formatter service.
    *
-   * @var array
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
    */
-  protected $shorthandStories = [];
+  protected $dateFormatter;
 
   /**
    * The constructor method.
@@ -62,15 +59,15 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    *   The widget settings.
    * @param array $third_party_settings
    *   Any third party settings.
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
-   *   The file system service.
-   * @param \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator
-   *   The file URL generator service.
+   * @param \Drupal\shorthand\LocalStoryIndex $local_story_index
+   *   The local story index.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter service.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, FileSystemInterface $file_system, FileUrlGeneratorInterface $file_url_generator) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, LocalStoryIndex $local_story_index, DateFormatterInterface $date_formatter) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-    $this->fileSystem = $file_system;
-    $this->fileUrlGenerator = $file_url_generator;
+    $this->localStoryIndex = $local_story_index;
+    $this->dateFormatter = $date_formatter;
   }
 
   /**
@@ -83,8 +80,8 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
       $configuration['field_definition'],
       $configuration['settings'],
       $configuration['third_party_settings'],
-      $container->get('file_system'),
-      $container->get('file_url_generator')
+      $container->get('shorthand.local_story_index'),
+      $container->get('date.formatter')
     );
   }
 
@@ -92,197 +89,226 @@ class LocalShorthandStorySelectFieldWidget extends WidgetBase implements Contain
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+    $field_name = $this->fieldDefinition->getName();
+    $stored_value = (string) ($items[$delta]->value ?? '');
+    $default_story_id = '';
+    $default_version_id = '';
+    if ($stored_value !== '' && str_contains($stored_value, '/')) {
+      [$default_story_id, $default_version_id] = explode('/', $stored_value, 2);
+    }
+
+    // Prefer the story submitted in the current (AJAX-rebuilt) form state
+    // over the stored field value. Values may not be populated yet during
+    // the AJAX rebuild, so fall back to the raw user input.
+    $selected_story_id = $default_story_id;
+    $story_path = array_merge($element['#field_parents'], [$field_name, $delta, 'value', 'story']);
+    $story_input = $form_state->getValue($story_path);
+    if ($story_input === NULL) {
+      $story_input = NestedArray::getValue($form_state->getUserInput(), $story_path);
+    }
+    if ($story_input !== NULL) {
+      $selected_story_id = static::extractStoryId((string) $story_input);
+    }
+
+    $selected_story = $selected_story_id !== '' ? $this->localStoryIndex->get($selected_story_id) : NULL;
+
+    $default_story_display = '';
+    if ($default_story_id !== '') {
+      $default_story = $this->localStoryIndex->get($default_story_id);
+      $default_story_display = $default_story !== NULL
+        ? $default_story['title'] . ' (' . $default_story_id . ')'
+        : $default_story_id;
+    }
+
+    // Deterministic wrapper ID: Html::getUniqueId() appends a per-request
+    // suffix, which would break replacement targeting after the first AJAX
+    // rebuild.
+    $version_wrapper_id = Html::cleanCssIdentifier($field_name . '-' . $delta . '-shorthand-version-wrapper');
+
     $element['value'] = $element + [
-      '#type' => 'select',
-      '#default_value' => $items[$delta]->value ?? NULL,
-      '#options' => $this->buildStoriesList(),
+      '#type' => 'container',
+      '#element_validate' => [
+        [static::class, 'validateStorySelection'],
+      ],
+      '#attributes' => [
+        'class' => ['shorthand-local-story-widget'],
+        'data-shorthand-local-story-widget' => 'true',
+        'data-shorthand-detail-url' => Url::fromRoute('shorthand.local_story_detail', ['story_id' => '_ID_'])->toString(),
+        'data-shorthand-search-url' => Url::fromRoute('shorthand.local_story_autocomplete')->toString(),
+        'data-shorthand-preview-url' => Url::fromRoute('shorthand.local_story_preview', [
+          'story_id' => '_ID_',
+          'version_id' => '_VERSION_',
+        ])->toString(),
+      ],
       '#attached' => [
         'library' => [
           'shorthand/shorthandSelectionForm',
         ],
       ],
-      '#suffix' => '<div id="shorthand-stories-data">' . Html::escape(Json::encode($this->shorthandStories)) . '</div>',
+    ];
+
+    $element['value']['story'] = [
+      '#type' => 'textfield',
+      '#title' => $element['#title'] ?? $this->t('Shorthand story'),
+      '#default_value' => $default_story_display,
+      '#description' => empty($this->localStoryIndex->getAll())
+        ? $this->t('No local stories found. Head to content > shorthand stories (remote).')
+        : $this->t('Search downloaded Shorthand stories, or pick one from the list below.'),
+      '#maxlength' => 1024,
+      '#attributes' => [
+        'data-shorthand-story-input' => 'true',
+      ],
+      // Custom event fired by shorthand-selection-form.js only when the
+      // selected story actually changes, so interacting with the search
+      // field without picking a story does not trigger a needless rebuild.
+      '#ajax' => [
+        'callback' => [static::class, 'updateVersionElement'],
+        'event' => 'shorthandStoryChange',
+        'wrapper' => $version_wrapper_id,
+        'progress' => ['type' => 'throbber', 'message' => NULL],
+      ],
+    ];
+
+    $element['value']['options'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['shorthand-story-options'],
+        'data-shorthand-story-options' => 'true',
+      ],
+    ];
+
+    $version_options = ['' => $this->t('Latest downloaded version')];
+    if ($selected_story !== NULL) {
+      foreach ($selected_story['versions'] as $version_id) {
+        $version_options[$version_id] = $this->formatVersionLabel($version_id);
+      }
+    }
+
+    // The wrapper div must always exist as the #ajax replacement target, so
+    // hide it (rather than omit it) until a story is chosen.
+    $version_wrapper_classes = $selected_story === NULL ? ' class="shorthand-version-hidden"' : '';
+    $element['value']['version'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Version'),
+      '#options' => $version_options,
+      '#default_value' => isset($version_options[$default_version_id]) ? $default_version_id : '',
+      '#prefix' => '<div id="' . $version_wrapper_id . '"' . $version_wrapper_classes . '>',
+      '#suffix' => '</div>',
+    ];
+
+    $element['value']['preview'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['shorthand-story-preview'],
+        'data-shorthand-story-preview' => 'true',
+      ],
     ];
 
     return $element;
   }
 
   /**
-   * Return Shorthand stories.
-   *
-   * @return array
-   *   Array of Shorthand stories, keyed by Story ID.
+   * AJAX callback: refresh the version select for the chosen story.
    */
-  protected function buildStoriesList() {
-    $options = [0 => $this->t('- Select -')];
+  public static function updateVersionElement(array $form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    $parents = array_slice($triggering_element['#array_parents'], 0, -1);
+    $element = NestedArray::getValue($form, $parents);
+    return $element['version'];
+  }
 
-    $destination_uri = 'public://' . RemoteCollectionController::SHORTHAND_STORY_BASE_PATH;
-
-    if (!$this->fileSystem->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS)) {
-      $this->messenger()->addWarning($this->t('Error accessing shorthand stories folder.'));
-
-      return $options;
+  /**
+   * Validate the selected story and version.
+   */
+  public static function validateStorySelection(array &$element, FormStateInterface $form_state, array &$form) {
+    $story_raw = trim((string) $form_state->getValue(array_merge($element['#parents'], ['story'])));
+    if ($story_raw === '') {
+      return;
     }
 
-    $storyFolders = $this->fileSystem->scanDirectory($destination_uri, '/.*/', [
-      'recurse' => FALSE,
-      'key' => 'filename',
-    ]);
+    $story_id = static::extractStoryId($story_raw);
+    $story = $story_id !== '' ? \Drupal::service('shorthand.local_story_index')->get($story_id) : NULL;
 
-    $stories = [];
-    foreach (array_keys($storyFolders) as $story_id) {
-      $storyVersionFolders = $this->fileSystem->scanDirectory($destination_uri . '/' . $story_id, '/.*/', [
-        'recurse' => FALSE,
-        'key' => 'filename',
-      ]);
+    if ($story === NULL) {
+      $form_state->setError($element['story'], t('Select a downloaded Shorthand story from the autocomplete suggestions.'));
+      return;
+    }
 
-      foreach (array_keys($storyVersionFolders) as $version_id) {
-        $story_version_uri = $destination_uri . '/' . $story_id . '/' . $version_id;
-        if (!isset($stories[$story_id])) {
-          $stories[$story_id] = $this->buildLocalStoryData($story_id, $version_id, $story_version_uri);
-        }
-        $options[$story_id . '/' . $version_id] = $stories[$story_id]['title'] . ' @ ' . $version_id;
+    if (empty($story['versions'])) {
+      $form_state->setError($element['story'], t('The selected Shorthand story has no downloaded versions.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
+    foreach ($values as &$value) {
+      $story_raw = trim((string) ($value['value']['story'] ?? ''));
+      $version = trim((string) ($value['value']['version'] ?? ''));
+      $value['value'] = '';
+
+      if ($story_raw === '') {
+        continue;
       }
-    }
 
-    $this->shorthandStories = array_values($stories);
-
-    if (count($options) === 1) {
-      $options = [0 => 'No local stories found. Head to content > shorthand stories (remote).'];
-    }
-
-    return $options;
-  }
-
-  /**
-   * Build story metadata from a downloaded local story version.
-   *
-   * @param string $story_id
-   *   The Shorthand story ID.
-   * @param string $version_id
-   *   The local story version ID.
-   * @param string $story_version_uri
-   *   The local story version URI.
-   *
-   * @return array
-   *   Story data shaped for shorthand-selection-form.js.
-   */
-  protected function buildLocalStoryData($story_id, $version_id, $story_version_uri) {
-    $metadata = $this->extractHeadMetadata($story_version_uri . '/head.html');
-    return [
-      'id' => $story_id,
-      'title' => $metadata['title'] ?: $story_id,
-      'image' => $this->resolveLocalImageUrl($metadata['image'], $story_version_uri),
-      'thumbnail_route' => Url::fromRoute('shorthand.local_thumbnail', [
-        'story_id' => $story_id,
-        'version_id' => $version_id,
-      ])->toString(),
-      'status' => $this->t('Downloaded')->render(),
-      'metadata' => [
-        'description' => $metadata['description'],
-      ],
-    ];
-  }
-
-  /**
-   * Extract story metadata from a downloaded head.html file.
-   *
-   * @param string $head_uri
-   *   The local head.html URI.
-   *
-   * @return array
-   *   Extracted metadata.
-   */
-  protected function extractHeadMetadata($head_uri) {
-    $metadata = [
-      'title' => '',
-      'description' => '',
-      'image' => '',
-    ];
-
-    if (!file_exists($head_uri)) {
-      return $metadata;
-    }
-
-    $head = file_get_contents($head_uri);
-    $meta = [];
-    if (preg_match_all('/<meta\s+[^>]*>/i', $head, $tags)) {
-      foreach ($tags[0] as $tag) {
-        $attributes = $this->parseHtmlAttributes($tag);
-        $name = strtolower($attributes['property'] ?? $attributes['name'] ?? '');
-        if ($name !== '' && isset($attributes['content'])) {
-          $meta[$name] = $attributes['content'];
-        }
+      $story_id = static::extractStoryId($story_raw);
+      $story = $story_id !== '' ? $this->localStoryIndex->get($story_id) : NULL;
+      if ($story === NULL || empty($story['versions'])) {
+        continue;
       }
-    }
 
-    $metadata['title'] = $meta['og:title'] ?? $meta['twitter:title'] ?? '';
-    $metadata['description'] = $meta['og:description'] ?? $meta['description'] ?? $meta['twitter:description'] ?? '';
-    $metadata['image'] = $meta['og:image'] ?? $meta['twitter:image'] ?? '';
-
-    if ($metadata['title'] === '' && preg_match('/<title[^>]*>(.*?)<\/title>/is', $head, $matches)) {
-      $metadata['title'] = html_entity_decode(strip_tags($matches[1]), ENT_QUOTES | ENT_HTML5);
-    }
-
-    return $metadata;
-  }
-
-  /**
-   * Parse simple HTML tag attributes.
-   *
-   * @param string $tag
-   *   The HTML tag.
-   *
-   * @return array
-   *   Attribute values keyed by lowercase attribute name.
-   */
-  protected function parseHtmlAttributes($tag) {
-    $attributes = [];
-    if (preg_match_all('/([a-zA-Z_:.-]+)\s*=\s*(["\'])(.*?)\2/s', $tag, $matches, PREG_SET_ORDER)) {
-      foreach ($matches as $match) {
-        $attributes[strtolower($match[1])] = html_entity_decode($match[3], ENT_QUOTES | ENT_HTML5);
+      if ($version === '' || !in_array($version, $story['versions'], TRUE)) {
+        $version = $story['versions'][0];
       }
+
+      $value['value'] = $story_id . '/' . $version;
     }
-    return $attributes;
+
+    return $values;
   }
 
   /**
-   * Resolve a metadata image URL for use in the local selector.
+   * Extract a story ID from an autocomplete value or raw ID.
    *
-   * @param string $image
-   *   The image URL extracted from metadata.
-   * @param string $story_version_uri
-   *   The local story version URI.
+   * Autocomplete selections are formatted as "Title (story_id)"; raw story
+   * IDs are accepted as-is.
+   *
+   * @param string $value
+   *   The submitted story value.
    *
    * @return string
-   *   A URL suitable for an image src.
+   *   The story ID, or an empty string when the value is not recognised.
    */
-  protected function resolveLocalImageUrl($image, $story_version_uri) {
-    if ($image === '') {
+  public static function extractStoryId($value) {
+    $value = trim($value);
+    if ($value === '') {
       return '';
     }
 
-    $relative_path = '';
-    if (preg_match('/^https?:\/\//i', $image)) {
-      $path = parse_url($image, PHP_URL_PATH) ?: '';
-      $assets_position = strpos($path, '/assets/');
-      if ($assets_position !== FALSE) {
-        $relative_path = substr($path, $assets_position + 1);
-      }
-    }
-    else {
-      $relative_path = preg_replace('#^\./#', '', $image);
+    if (preg_match('/\((' . self::STORY_ID_PATTERN . ')\)$/', $value, $matches)) {
+      return $matches[1];
     }
 
-    if ($relative_path !== '') {
-      $relative_path = rawurldecode($relative_path);
-      $local_uri = $story_version_uri . '/' . $relative_path;
-      if (file_exists($local_uri)) {
-        return $this->fileUrlGenerator->generateString($local_uri);
-      }
+    if (preg_match('/^' . self::STORY_ID_PATTERN . '$/', $value)) {
+      return $value;
     }
 
-    return $image;
+    return '';
+  }
+
+  /**
+   * Format a downloaded version ID as a readable date.
+   *
+   * @param string $version_id
+   *   The version ID (an ISO 8601 timestamp).
+   *
+   * @return string
+   *   The formatted label.
+   */
+  protected function formatVersionLabel($version_id) {
+    $timestamp = strtotime($version_id);
+    return $timestamp !== FALSE ? $this->dateFormatter->format($timestamp, 'short') : $version_id;
   }
 
 }

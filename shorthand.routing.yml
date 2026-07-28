@@ -50,6 +50,36 @@ shorthand.story_autocomplete:
   options:
     _admin_route: TRUE
 
+shorthand.local_story_autocomplete:
+  path: '/admin/content/shorthand/local-autocomplete'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\LocalStoryController::autocomplete'
+  requirements:
+    _permission: 'access shorthand story overview'
+  options:
+    _admin_route: TRUE
+
+shorthand.local_story_detail:
+  path: '/admin/content/shorthand/local-story/{story_id}'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\LocalStoryController::detail'
+  requirements:
+    _permission: 'access shorthand story overview'
+    story_id: '[^/]+'
+  options:
+    _admin_route: TRUE
+
+shorthand.local_story_preview:
+  path: '/admin/content/shorthand/local-story/{story_id}/{version_id}/preview'
+  defaults:
+    _controller: '\Drupal\shorthand\Controller\LocalStoryController::preview'
+  requirements:
+    _permission: 'access shorthand story overview'
+    story_id: '[^/]+'
+    version_id: '[^/]+'
+  options:
+    _admin_route: TRUE
+
 shorthand.local_thumbnail:
   path: '/admin/content/shorthand/local-thumbnail/{story_id}/{version_id}'
   defaults:

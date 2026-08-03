@@ -10,3 +10,6 @@ shorthandSelectionForm:
   css:
     component:
       resources/css/shorthand-selection-form.css: {}
+  dependencies:
+    - core/drupal
+    - core/once

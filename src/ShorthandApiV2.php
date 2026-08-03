@@ -24,11 +24,6 @@ class ShorthandApiV2 implements ShorthandApiInterface {
   use StringTranslationTrait;
 
   /**
-   * Shorthand API URL.
-   */
-  const SHORTHAND_API_URL = 'https://api.shorthand.com/';
-
-  /**
    * GuzzleHttp\Client definition.
    *
    * @var \GuzzleHttp\Client
@@ -119,6 +114,9 @@ class ShorthandApiV2 implements ShorthandApiInterface {
       $response = $this->httpClient->get('v2/publish-configurations', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
       ]);
 
       $decoded = Json::decode((string) $response->getBody());
@@ -159,7 +157,17 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
   protected function getBaseUri() {
-    return self::SHORTHAND_API_URL;
+    return rtrim(self::SHORTHAND_API_URL, '/') . '/';
+  }
+
+  /**
+   * Determine whether API requests should verify SSL certificates.
+   *
+   * @return bool
+   *   TRUE if Guzzle should verify SSL certificates.
+   */
+  protected function shouldVerifySsl() {
+    return self::SHORTHAND_API_VERIFY_SSL;
   }
 
   /**
@@ -190,14 +198,17 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    *
    * @see https://www.drupal.org/project/shorthand/issues/3250535
    */
-  public function getStories() {
+  public function getStories(array $params = []) {
 
     $stories = [];
 
     try {
-      $response = $this->httpClient->get('v2/stories', [
+      $response = $this->httpClient->get('v2/stories' . (!empty($params) ? '?' . http_build_query($params) : ''), [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders(),
+        'timeout' => $this->config->get('shorthand.settings')
+          ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
       ]);
 
       $decoded = Json::decode((string) $response->getBody());
@@ -250,6 +261,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
         'sink' => $temp_path,
         'timeout' => $this->config->get('shorthand.settings')
           ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
       ]);
     }
     catch (BadResponseException $error) {
@@ -293,6 +305,7 @@ class ShorthandApiV2 implements ShorthandApiInterface {
         'body' => json_encode($this->buildBody($config->id)),
         'timeout' => $this->config->get('shorthand.settings')
           ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
       ]);
     }
     catch (BadResponseException $error) {
@@ -332,13 +345,12 @@ class ShorthandApiV2 implements ShorthandApiInterface {
    */
   public function validateApiKey($token) {
     try {
-      error_log('TESTING THIS');
-      error_log($this->getBaseUri());
       $this->httpClient->get('v2/token-info/', [
         'base_uri' => $this->getBaseUri(),
         'headers' => $this->buildHeaders($token),
         'timeout' => $this->config->get('shorthand.settings')
           ->get('request_timeout'),
+        'verify' => $this->shouldVerifySsl(),
       ]);
     }
     catch (BadResponseException $error) {

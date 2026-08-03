@@ -7,6 +7,10 @@ services:
     class: Drupal\shorthand\ShorthandApiV2
     arguments: ['@http_client', '@file_system', '@messenger', '@logger.channel.shorthand', '@config.factory']
 
+  shorthand.local_story_index:
+    class: Drupal\shorthand\LocalStoryIndex
+    arguments: ['@file_system', '@cache.default', '@file_url_generator']
+
   logger.channel.shorthand:
     parent: logger.channel_base
     arguments: ['shorthand']

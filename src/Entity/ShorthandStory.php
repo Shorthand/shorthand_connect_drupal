@@ -27,7 +27,7 @@ use Drupal\user\UserInterface;
  *     "form" = {
  *       "default" = "Drupal\shorthand\Form\ShorthandStoryForm",
  *       "add" = "Drupal\shorthand\Form\ShorthandStoryForm",
- *       "edit" = "Drupal\shorthand\Form\ShorthandStoryForm", 
+ *       "edit" = "Drupal\shorthand\Form\ShorthandStoryForm",
  *       "delete" = "Drupal\shorthand\Form\ShorthandStoryDeleteForm",
  *     },
  *     "access" = "Drupal\shorthand\ShorthandStoryAccessControlHandler",
@@ -68,7 +68,6 @@ use Drupal\user\UserInterface;
  *
  * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use shorthand field.
  *
- * 
  * @see https://www.drupal.org/project/shorthand/issues/3274487
  */
 class ShorthandStory extends RevisionableContentEntityBase implements ShorthandStoryInterface {
@@ -78,7 +77,7 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
   /**
    * Defines shorthand's stories container base path.
    *
-   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use 
+   * @deprecated in shorthand:4.0.0 and is removed from shorthand:5.0.0. Use
    * \Drupal\shorthand\Controller\RemoteCollectionController::SHORTHAND_STORY_BASE_PATH.
    *
    * @see https://www.drupal.org/project/shorthand/issues/3274487
@@ -529,8 +528,27 @@ class ShorthandStory extends RevisionableContentEntityBase implements ShorthandS
     }
     $content = str_replace('./static/', $assets_path . '/static/', $content);
     $content = preg_replace('/.(\/theme-\w+.min.css)/', $assets_path . '$1', $content);
+    $content = $this->upgradeHttpUrlAttributes($content);
 
     return $content;
+  }
+
+  /**
+   * Upgrade insecure URLs only when they appear in URL-bearing attributes.
+   *
+   * @param string $content
+   *   Shorthand Story's HTML markup to be processed.
+   *
+   * @return string
+   *   Processed content.
+   */
+  protected function upgradeHttpUrlAttributes($content) {
+    $url_attribute_pattern = '/\b('
+      . '(?:src|href|poster|action|formaction|data-[a-z0-9_-]+)'
+      . '\s*=\s*)(["\'])http:\/\//i';
+    return preg_replace_callback($url_attribute_pattern, function ($matches) {
+      return $matches[1] . $matches[2] . 'https://';
+    }, $content);
   }
 
   /**

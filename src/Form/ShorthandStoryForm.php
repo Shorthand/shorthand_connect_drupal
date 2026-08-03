@@ -9,7 +9,6 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -71,17 +70,20 @@ class ShorthandStoryForm extends ContentEntityForm {
    *   The messenger interface.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger instance.
-   * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   Config factory instance.
    */
-  public function __construct(EntityRepositoryInterface $entity_repository,
-    EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL,
-    TimeInterface $time = NULL,
+  public function __construct(
+    EntityRepositoryInterface $entity_repository,
+    EntityTypeBundleInfoInterface $entity_type_bundle_info,
+    TimeInterface $time,
     AccountInterface $current_user,
     MessengerInterface $messenger,
-    LoggerInterface $logger,
-    ConfigFactoryInterface $config_factory) {
-    parent::__construct($entity_repository, $entity_type_bundle_info, $time, $config_factory);
+    LoggerInterface $logger
+  ) {
+    parent::__construct(
+      $entity_repository,
+      $entity_type_bundle_info,
+      $time
+    );
     $this->currentUser = $current_user;
     $this->time = $time;
     $this->messenger = $messenger;
@@ -98,8 +100,7 @@ class ShorthandStoryForm extends ContentEntityForm {
       $container->get('datetime.time'),
       $container->get('current_user'),
       $container->get('messenger'),
-      $container->get('logger.channel.shorthand'),
-      $container->get('config.factory')
+      $container->get('logger.channel.shorthand')
     );
   }
 
@@ -126,7 +127,6 @@ class ShorthandStoryForm extends ContentEntityForm {
     $input_format = $config->get('input_format', filter_default_format());
 
     $format_fail = !in_array($input_format, $formats);
-    $load_fail = ($form['shorthand_id']['widget'][0]['value']['#options'] == [0 => "Cannot retrieve stories"]);
 
     if ($format_fail) {
       $error = $this->t('The <em>shorthand_input_format</em> setting value <em>@format</em> does not match existing text format. It should be one of the following: <strong>@formats</strong>', [
@@ -137,7 +137,7 @@ class ShorthandStoryForm extends ContentEntityForm {
       $this->logger->error($error);
     }
 
-    if ($format_fail || $load_fail) {
+    if ($format_fail) {
       return new RedirectResponse('/admin/content/shorthand-story');
     }
     else {
@@ -177,7 +177,10 @@ class ShorthandStoryForm extends ContentEntityForm {
           '%label' => $entity->label(),
         ]));
     }
-    $form_state->setRedirect('entity.shorthand_story.canonical', ['shorthand_story' => $entity->id()]);
+    return $form_state->setRedirect(
+      'entity.shorthand_story.canonical',
+      ['shorthand_story' => $entity->id()]
+    );
   }
 
 }

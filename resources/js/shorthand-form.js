@@ -27,10 +27,9 @@ function filterStories(filter) {
   });
 }
 
-if(storyFilter){
+if (storyFilter) {
   storyFilter.addEventListener('keyup', () => {
     const filter = storyFilter.value;
     filterStories(filter.toLowerCase());
   });
 }
-
